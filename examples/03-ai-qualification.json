@@ -1,0 +1,14 @@
+{
+  "_note": "Structured qualification, schema-validated and clamped. `provider` is 'deterministic' here because the demo runs offline; `degraded` false means this was the configured provider, not a fallback.",
+  "intent": "Urgent repair needed",
+  "service_category": "emergency_repair",
+  "priority": "high",
+  "qualification_score": 90,
+  "missing_information": [],
+  "summary": "Dana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).",
+  "recommended_action": "Call within the SLA window.",
+  "degraded": false,
+  "degraded_reason": "",
+  "provider": "deterministic",
+  "model": "rules-v1"
+}

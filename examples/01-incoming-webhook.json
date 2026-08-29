@@ -1,0 +1,13 @@
+{
+  "_note": "The raw website form post, exactly as it arrives at POST /webhooks/leads/website.",
+  "submission_id": "ws_2026082901",
+  "name": "Dana Whitfield",
+  "email": "Dana.Whitfield@example.com ",
+  "phone": "(512) 555-0147",
+  "service": "Heating repair",
+  "message": "Our furnace stopped working overnight and there is no heat in the house. We have a baby at home so this is urgent - can someone come out today?",
+  "city": "Round Rock, TX",
+  "submitted_at": "2026-08-29T07:14:22Z",
+  "page_url": "https://example.com/heating-repair",
+  "utm_campaign": "furnace-repair-aug"
+}

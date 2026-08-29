@@ -1,0 +1,113 @@
+# Lead routing rules.
+#
+# These are deliberately data, not code. On a real engagement the business owner
+# changes "high-value jobs over $5k go straight to the owner's phone" without a
+# deploy, and every change is a reviewable diff.
+#
+# Evaluation is first-match-wins, top to bottom. `default` catches everything
+# that falls through, so a lead can never end up with no destination.
+#
+# The AI classifies. These rules route. The model never names a pipeline stage
+# or an assignee itself - see docs/architecture.md#prompt-injection for why.
+
+version: 1
+
+# The closed vocabulary the AI is allowed to classify into. Anything outside this
+# list is coerced to `other` rather than silently accepted, so a hallucinated
+# category cannot invent a routing path. `other` is a deliberate exit: a closed
+# vocabulary with no escape hatch pushes bad data into a wrong-but-valid value.
+service_categories:
+  - emergency_repair
+  - installation
+  - maintenance
+  - quote_request
+  - warranty_claim
+  - general_enquiry
+  - other
+
+rules:
+  - id: spam_or_unqualified
+    when:
+      qualification_score_lt: 20
+    then:
+      pipeline_stage: unqualified
+      opportunity_status: abandoned
+      tags: [unqualified]
+      follow_up_sequence: ""
+      notify_sales: false
+      reason: "Score below the qualification floor; no sales time spent."
+
+  - id: emergency_high_priority
+    when:
+      service_category_in: [emergency_repair]
+      priority_in: [high]
+    then:
+      pipeline_stage: hot_lead
+      monetary_value: 1200
+      tags: [emergency, call-now]
+      follow_up_sequence: emergency_sms_then_call
+      notify_sales: true
+      notify_channel: sales_urgent
+      sla_minutes: 5
+      reason: "Emergency work is time-priced; a five-minute callback wins the job."
+
+  - id: high_value_installation
+    when:
+      service_category_in: [installation]
+      qualification_score_gte: 70
+    then:
+      pipeline_stage: hot_lead
+      monetary_value: 6500
+      tags: [installation, high-value]
+      follow_up_sequence: installation_quote_booking
+      notify_sales: true
+      notify_channel: sales_primary
+      sla_minutes: 30
+      reason: "Large ticket; route to a human before an automated sequence dilutes it."
+
+  - id: missing_contact_details
+    when:
+      has_missing_information: true
+      qualification_score_gte: 20
+    then:
+      pipeline_stage: needs_info
+      tags: [needs-info]
+      follow_up_sequence: ask_for_missing_details
+      notify_sales: false
+      sla_minutes: 240
+      reason: "Enough intent to pursue, not enough information to quote."
+
+  - id: warranty_to_service_desk
+    when:
+      service_category_in: [warranty_claim]
+    then:
+      pipeline_stage: new_lead
+      tags: [warranty]
+      follow_up_sequence: warranty_acknowledgement
+      notify_sales: true
+      notify_channel: sales_primary
+      sla_minutes: 480
+      reason: "Existing customer; an unanswered warranty claim costs a review."
+
+  - id: qualified_standard
+    when:
+      qualification_score_gte: 50
+    then:
+      pipeline_stage: new_lead
+      monetary_value: 800
+      tags: [qualified]
+      follow_up_sequence: standard_nurture
+      notify_sales: false
+      sla_minutes: 1440
+      reason: "Normal qualified lead; automated nurture is enough."
+
+default:
+  id: default_nurture
+  then:
+    pipeline_stage: nurture
+    monetary_value: 0
+    tags: [low-intent]
+    follow_up_sequence: long_nurture
+    notify_sales: false
+    sla_minutes: 2880
+    reason: "Low signal; keep warm without consuming sales time."

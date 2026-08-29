@@ -1,0 +1,16 @@
+{
+  "_note": "Produced by deterministic rules from config/routing.yml - never by the model. `reason` is carried through so the audit log explains itself.",
+  "rule_id": "emergency_high_priority",
+  "pipeline_stage": "hot_lead",
+  "opportunity_status": "open",
+  "monetary_value": 1200.0,
+  "tags": [
+    "emergency",
+    "call-now"
+  ],
+  "follow_up_sequence": "emergency_sms_then_call",
+  "notify_sales": true,
+  "notify_channel": "sales_urgent",
+  "sla_minutes": 5,
+  "reason": "Emergency work is time-priced; a five-minute callback wins the job."
+}

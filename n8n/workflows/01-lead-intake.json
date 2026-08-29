@@ -1,0 +1,721 @@
+{
+  "name": "Lead Ops - GHL intake, AI qualification, routing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "lead-webhook",
+      "name": "Lead Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        300
+      ],
+      "webhookId": "leadops-lead-intake"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Identify which source posted: from the query string, an explicit\n// header, or the shape of the body. One webhook URL for every source\n// is far easier to hand a client than four.\nconst item = $input.first();\nconst body = item.json.body ?? item.json;\nconst query = item.json.query ?? {};\nconst headers = item.json.headers ?? {};\n\nconst declared = query.source || headers['x-lead-source'] || '';\nlet source = String(declared).toLowerCase();\nif (!source) {\n  if (body.leadgen_id || body.field_data) source = 'meta';\n  else if (body.lead_id || body.user_column_data) source = 'google';\n  else if (body.partner_id || body.lead) source = 'partner';\n  else source = 'website';\n}\n\n// One correlation id for the whole execution. It goes to the service,\n// is forwarded to GoHighLevel, and is logged here - so one search\n// spans all three systems.\nconst correlationId = headers['x-correlation-id']\n  || ('n8n_' + $execution.id + '_' + Date.now());\n\n// Prefer a real delivery id from the sender over anything we invent.\nconst idempotencyKey = headers['x-idempotency-key'] || body.event_id\n  || body.leadgen_id || body.lead_id || body.submission_id || '';\n\nreturn [{ json: { source, correlationId, idempotencyKey, payload: body } }];"
+      },
+      "id": "detect-source",
+      "name": "Detect Source",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Cheap structural checks before spending a service call. These would fail\n// in the service too; catching them here keeps the reason visible in the\n// n8n execution list, which is where the client actually looks.\nconst { source, payload, correlationId, idempotencyKey } =\n  $input.first().json;\nconst problems = [];\n\nconst KNOWN = ['website', 'meta', 'google', 'partner'];\nif (!KNOWN.includes(source)) problems.push('unknown source: ' + source);\nif (!payload || typeof payload !== 'object' || Array.isArray(payload)) {\n  problems.push('body is not a JSON object');\n}\nif (JSON.stringify(payload || {}).length > 100000) {\n  problems.push('payload too large');\n}\n\nreturn [{ json: {\n  source, payload, correlationId, idempotencyKey,\n  problems, valid: problems.length === 0,\n} }];"
+      },
+      "id": "validate-shape",
+      "name": "Validate Shape",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "valid",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "valid-payload",
+      "name": "Valid Payload?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nreturn [{ json: {\n  rejected: true, problems: j.problems, correlationId: j.correlationId,\n} }];"
+      },
+      "id": "reject-invalid-payload",
+      "name": "Reject Invalid Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.LEADOPS_BASE_URL }}/webhooks/leads/{{ $json.source }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "X-Correlation-Id",
+              "value": "={{ $json.correlationId }}"
+            },
+            {
+              "name": "X-Idempotency-Key",
+              "value": "={{ $json.idempotencyKey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          },
+          "timeout": 30000
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "process-lead-service",
+      "name": "Process Lead (service)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "LeadOps service token"
+        }
+      },
+      "notes": "neverError is deliberate: the service answers 202 for a retryable failure and 400 for a bad payload, and we branch on that ourselves rather than letting n8n abort the execution and lose the distinction.",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// The service already decided what happened. n8n branches on that decision\n// rather than re-deriving it - two implementations of one rule always drift.\nconst response = $input.first().json;\nconst body = response.body ?? {};\n\nreturn [{ json: {\n  statusCode: response.statusCode,\n  outcome: body.status || 'unknown',\n  retryable: response.statusCode === 202,\n  correlationId: body.correlation_id,\n  eventId: body.event_id,\n  contactId: body.contact_id,\n  opportunityId: body.opportunity_id,\n  qualification: body.qualification || null,\n  routing: body.routing || null,\n  error: body.error || null,\n} }];"
+      },
+      "id": "classify-outcome",
+      "name": "Classify Outcome",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -20,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ok",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.outcome }}",
+              "rightValue": "succeeded"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "succeeded",
+      "name": "Succeeded?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        200,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    },
+                    "leftValue": "={{ $json.routing.notify_sales }}",
+                    "rightValue": ""
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "escalate"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    },
+                    "leftValue": "={{ $json.routing.follow_up_sequence }}",
+                    "rightValue": ""
+                  }
+                ],
+                "combinator": "and"
+              },
+              "outputKey": "nurture"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "file_only"
+        }
+      },
+      "id": "route-by-priority",
+      "name": "Route by Priority",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        420,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// The service already sent the internal alert and first-touch message.\n// This branch makes the SLA clock visible in n8n, which is where an\n// agency owner actually watches for missed leads.\nconst j = $input.first().json;\nreturn [{ json: {\n  branch: 'escalate',\n  channel: j.routing.notify_channel || 'sales_primary',\n  slaMinutes: j.routing.sla_minutes,\n  dueBy: new Date(\n    Date.now() + (j.routing.sla_minutes || 60) * 60000\n  ).toISOString(),\n  contactId: j.contactId,\n  score: j.qualification.qualification_score,\n  summary: j.qualification.summary,\n  correlationId: j.correlationId,\n  outcome: j.outcome,\n  eventId: j.eventId,\n  qualification: j.qualification,\n  routing: j.routing,\n} }];"
+      },
+      "id": "escalate-to-sales",
+      "name": "Escalate to Sales",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://services.leadconnectorhq.com/calendars/events/appointments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Version",
+              "value": "2021-07-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ calendarId: $env.GHL_CALENDAR_ID, locationId: $env.GHL_LOCATION_ID, contactId: $json.contactId, title: 'Site visit - ' + String($json.summary).slice(0, 60), appointmentStatus: 'new' }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          },
+          "timeout": 15000
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "book-appointment-slot",
+      "name": "Book Appointment Slot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        40
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "GoHighLevel API"
+        }
+      },
+      "notes": "Disabled by default. This is the one node that needs a real, paid GHL location; everything else in this workflow runs against the local mock. Enable it after filling in GHL_CALENDAR_ID and the credential.",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lower-intent leads. The first-touch email was already sent by the service;\n// this hands the contact to the GHL workflow that owns the longer sequence,\n// keyed by the tag the service applied.\nconst j = $input.first().json;\nreturn [{ json: {\n  branch: 'nurture',\n  contactId: j.contactId,\n  sequence: j.routing.follow_up_sequence,\n  tags: j.routing.tags,\n  reviewAfterDays: j.routing.sla_minutes\n    ? Math.ceil(j.routing.sla_minutes / 1440) : 2,\n  correlationId: j.correlationId,\n  outcome: j.outcome,\n  eventId: j.eventId,\n  qualification: j.qualification,\n  routing: j.routing,\n} }];"
+      },
+      "id": "enter-nurture-sequence",
+      "name": "Enter Nurture Sequence",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Spam and unqualified leads. Recorded in the CRM so the volume is\n// auditable, but nobody is texted and no salesperson is interrupted.\nconst j = $input.first().json;\nreturn [{ json: {\n  branch: 'file_only',\n  contactId: j.contactId,\n  ruleId: j.routing.rule_id,\n  reason: j.routing.reason,\n  correlationId: j.correlationId,\n  outcome: j.outcome,\n  eventId: j.eventId,\n  qualification: j.qualification,\n  routing: j.routing,\n} }];"
+      },
+      "id": "file-without-contact",
+      "name": "File Without Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "id": "merge-branches",
+      "name": "Merge Branches",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1100,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "retry",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.retryable }}",
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "retryable",
+      "name": "Retryable?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        420,
+        620
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "minutes"
+      },
+      "id": "wait-and-redeliver",
+      "name": "Wait and Redeliver",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        560
+      ],
+      "webhookId": "leadops-retry-wait",
+      "notes": "Safe to loop back into the service because the idempotency key is unchanged: completed steps are memoized, so the retry resumes rather than re-creating the contact."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Terminal failure. The service has already dead-lettered it with the\n// original payload, so this is a notification, not data recovery: replay\n// from /admin/dead-letters once the cause is fixed.\nconst j = $input.first().json;\nreturn [{ json: {\n  branch: 'alert',\n  level: 'error',\n  message: 'Lead ' + j.eventId + ' failed permanently: '\n    + (j.error ? j.error.code : 'unknown'),\n  correlationId: j.correlationId,\n  replayWith: $env.LEADOPS_BASE_URL + '/admin/dead-letters/{id}/replay',\n  detail: j.error,\n  outcome: j.outcome,\n  eventId: j.eventId,\n} }];"
+      },
+      "id": "alert-operator",
+      "name": "Alert Operator",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n-side audit trail. The service keeps the authoritative record; this\n// exists so the client sees outcomes in the tool they already open, and so\n// an execution is self-describing months later.\nconst j = $input.first().json;\nreturn [{ json: {\n  ts: new Date().toISOString(),\n  executionId: $execution.id,\n  branch: j.branch || null,\n  correlationId: j.correlationId || null,\n  eventId: j.eventId || null,\n  outcome: j.outcome || 'unknown',\n  ruleId: j.routing ? j.routing.rule_id : null,\n  score: j.qualification ? j.qualification.qualification_score : null,\n  degraded: j.qualification ? j.qualification.degraded : null,\n} }];"
+      },
+      "id": "append-audit-row",
+      "name": "Append Audit Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ received: true, outcome: $json.outcome, correlation_id: $json.correlationId }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "respond-ok",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ received: false, problems: $json.problems }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "respond-rejected",
+      "name": "Respond Rejected",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Lead Webhook": {
+      "main": [
+        [
+          {
+            "node": "Detect Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Source": {
+      "main": [
+        [
+          {
+            "node": "Validate Shape",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Shape": {
+      "main": [
+        [
+          {
+            "node": "Valid Payload?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Payload?": {
+      "main": [
+        [
+          {
+            "node": "Process Lead (service)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject Invalid Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reject Invalid Payload": {
+      "main": [
+        [
+          {
+            "node": "Respond Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Lead (service)": {
+      "main": [
+        [
+          {
+            "node": "Classify Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Outcome": {
+      "main": [
+        [
+          {
+            "node": "Succeeded?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Succeeded?": {
+      "main": [
+        [
+          {
+            "node": "Route by Priority",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Retryable?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Priority": {
+      "main": [
+        [
+          {
+            "node": "Escalate to Sales",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enter Nurture Sequence",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "File Without Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalate to Sales": {
+      "main": [
+        [
+          {
+            "node": "Book Appointment Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Book Appointment Slot": {
+      "main": [
+        [
+          {
+            "node": "Merge Branches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enter Nurture Sequence": {
+      "main": [
+        [
+          {
+            "node": "Merge Branches",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "File Without Contact": {
+      "main": [
+        [
+          {
+            "node": "Merge Branches",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge Branches": {
+      "main": [
+        [
+          {
+            "node": "Append Audit Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retryable?": {
+      "main": [
+        [
+          {
+            "node": "Wait and Redeliver",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert Operator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait and Redeliver": {
+      "main": [
+        [
+          {
+            "node": "Process Lead (service)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Operator": {
+      "main": [
+        [
+          {
+            "node": "Append Audit Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Audit Row": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "errorWorkflow": "REPLACE_WITH_ERROR_WORKFLOW_ID",
+    "timezone": "America/Chicago"
+  },
+  "tags": [
+    {
+      "name": "gohighlevel"
+    },
+    {
+      "name": "lead-automation"
+    }
+  ],
+  "pinData": {},
+  "meta": {
+    "instanceId": "portfolio-demo",
+    "templateCredsSetupCompleted": false
+  }
+}

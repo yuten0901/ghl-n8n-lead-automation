@@ -1,0 +1,102 @@
+{
+  "name": "Lead Ops - error handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [-620, 300],
+      "notes": "Set as the errorWorkflow on 01-lead-intake. n8n calls this whenever that workflow throws - including failures the main workflow never had a chance to catch, such as the service being unreachable."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Turn n8n's error object into something a human can act on.\n//\n// The important field is `leadRecoverable`: the lead itself is NOT lost when\n// this workflow runs. The service has an idempotency ledger, so the original\n// webhook can simply be redelivered, and completed steps will be skipped.\n// Saying so here stops the 2am reaction of manually re-entering the lead and\n// creating a duplicate contact.\nconst e = $input.first().json;\nconst execution = e.execution || {};\nconst lastNode = execution.lastNodeExecuted || 'unknown';\n\nconst transport = /ECONNREFUSED|ETIMEDOUT|ENOTFOUND|socket hang up|timeout/i\n  .test(String(e.execution?.error?.message || ''));\n\nreturn [{ json: {\n  workflow: (e.workflow || {}).name || 'Lead Ops - GHL intake',\n  executionId: execution.id || null,\n  failedAt: lastNode,\n  message: String(execution.error?.message || 'unknown error').slice(0, 500),\n  stack: String(execution.error?.stack || '').slice(0, 1000),\n  classification: transport ? 'service_unreachable' : 'workflow_error',\n  leadRecoverable: true,\n  nextStep: transport\n    ? 'Check the LeadOps service and n8n network access, then redeliver the webhook.'\n    : 'Open the execution, fix the workflow, then replay from /admin/dead-letters.',\n  ts: new Date().toISOString(),\n} }];"
+      },
+      "id": "summarise-failure",
+      "name": "Summarise Failure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-400, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "version": 2 },
+          "conditions": [
+            {
+              "id": "unreachable",
+              "operator": { "type": "string", "operation": "equals" },
+              "leftValue": "={{ $json.classification }}",
+              "rightValue": "service_unreachable"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "service-down",
+      "name": "Service Unreachable?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-180, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.LEADOPS_BASE_URL }}/healthz",
+        "options": {
+          "response": { "response": { "fullResponse": true, "neverError": true } },
+          "timeout": 5000
+        }
+      },
+      "id": "probe-health",
+      "name": "Probe Service Health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [40, 200],
+      "notes": "Distinguishes 'the service is down' from 'the service is up and this one call failed'. Those need different people woken up."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Page the operator. Replace this node with Slack, PagerDuty or email as the\n// client prefers - it is deliberately a Code node so the repository has no\n// hard dependency on a paid notification service.\nconst j = $input.first().json;\nconst probe = j.statusCode ? ` (healthz returned ${j.statusCode})` : '';\nconsole.error('[leadops] ALERT', JSON.stringify(j));\nreturn [{ json: { alerted: true, channel: 'operator', detail: j, probe } }];"
+      },
+      "id": "page-operator",
+      "name": "Page Operator",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [260, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// A workflow-level bug rather than an outage: log it for the next working day\n// instead of waking someone. The lead is already recorded on the service side.\nconst j = $input.first().json;\nconsole.warn('[leadops] workflow error', JSON.stringify(j));\nreturn [{ json: { logged: true, severity: 'warning', detail: j } }];"
+      },
+      "id": "log-for-review",
+      "name": "Log For Review",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [40, 420]
+    }
+  ],
+  "connections": {
+    "Error Trigger": { "main": [[{ "node": "Summarise Failure", "type": "main", "index": 0 }]] },
+    "Summarise Failure": { "main": [[{ "node": "Service Unreachable?", "type": "main", "index": 0 }]] },
+    "Service Unreachable?": {
+      "main": [
+        [{ "node": "Probe Service Health", "type": "main", "index": 0 }],
+        [{ "node": "Log For Review", "type": "main", "index": 0 }]
+      ]
+    },
+    "Probe Service Health": { "main": [[{ "node": "Page Operator", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true
+  },
+  "tags": [{ "name": "gohighlevel" }, { "name": "lead-automation" }],
+  "pinData": {},
+  "meta": { "instanceId": "portfolio-demo", "templateCredsSetupCompleted": false }
+}

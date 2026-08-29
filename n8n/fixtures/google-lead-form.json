@@ -1,0 +1,15 @@
+{
+  "lead_id": "gads_77665544332211",
+  "campaign_id": "1234567890",
+  "adgroup_id": "987654321",
+  "gcl_id": "Cj0KCQjw_DEMO_gclid_value",
+  "form_id": "gf_5566",
+  "created_time": "2026-08-29T10:45:00Z",
+  "user_column_data": [
+    { "column_id": "FULL_NAME",    "string_value": "Tomás Herrera" },
+    { "column_id": "EMAIL",        "string_value": "t.herrera@example.com" },
+    { "column_id": "PHONE_NUMBER", "string_value": "5125550172" },
+    { "column_id": "CITY",         "string_value": "Pflugerville" },
+    { "column_id": "SERVICE",      "string_value": "Quote request" }
+  ]
+}

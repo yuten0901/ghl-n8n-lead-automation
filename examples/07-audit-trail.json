@@ -1,0 +1,150 @@
+{
+  "_note": "What GET /admin/events/{id} returns: every step with timings and every outbound call with attempt counts. This is the troubleshooting surface.",
+  "event_id": "evt_f4fb22e2400f4bc8aaa4",
+  "correlation_id": "cid_89fb825fd4ed46ea",
+  "steps": [
+    {
+      "step": "normalize",
+      "ok": true,
+      "duration_ms": 2,
+      "detail": {
+        "external_id": "ws_2026082901",
+        "source": "website",
+        "first_name": "Dana",
+        "last_name": "Whitfield",
+        "email": "dana.whitfield@example.com",
+        "phone": "+15125550147",
+        "service": "Heating repair",
+        "message": "Our furnace stopped working overnight and there is no heat in the house. We have a baby at home so this is urgent - can someone come out today?",
+        "location": "Round Rock, TX",
+        "submitted_at": "2026-08-29T07:14:22Z",
+        "extra": {
+          "page_url": "https://example.com/heating-repair",
+          "utm_campaign": "furnace-repair-aug"
+        }
+      }
+    },
+    {
+      "step": "lead_identity",
+      "ok": true,
+      "duration_ms": 5,
+      "detail": {
+        "lead_id": "lead_61fcfa8a318049b4b521",
+        "identity_key": "loc_DEMO0000000000000000:email:dana.whitfield@example.com",
+        "is_new_person": true,
+        "submission_count": 1,
+        "known_contact_id": ""
+      }
+    },
+    {
+      "step": "ai_qualification",
+      "ok": true,
+      "duration_ms": 1,
+      "detail": {
+        "qualification": {
+          "intent": "Urgent repair needed",
+          "service_category": "emergency_repair",
+          "priority": "high",
+          "qualification_score": 90,
+          "missing_information": [],
+          "summary": "Dana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).",
+          "recommended_action": "Call within the SLA window.",
+          "degraded": false,
+          "degraded_reason": "",
+          "provider": "deterministic",
+          "model": "rules-v1"
+        },
+        "provider_used": "deterministic",
+        "notes": []
+      }
+    },
+    {
+      "step": "routing",
+      "ok": true,
+      "duration_ms": 0,
+      "detail": {
+        "rule_id": "emergency_high_priority",
+        "pipeline_stage": "hot_lead",
+        "opportunity_status": "open",
+        "monetary_value": 1200.0,
+        "tags": [
+          "emergency",
+          "call-now"
+        ],
+        "follow_up_sequence": "emergency_sms_then_call",
+        "notify_sales": true,
+        "notify_channel": "sales_urgent",
+        "sla_minutes": 5,
+        "reason": "Emergency work is time-priced; a five-minute callback wins the job."
+      }
+    },
+    {
+      "step": "ghl_contact",
+      "ok": true,
+      "duration_ms": 7,
+      "detail": {
+        "contact_id": "ct_0847bc00aa144616a70a",
+        "created": true
+      }
+    },
+    {
+      "step": "ghl_note",
+      "ok": true,
+      "duration_ms": 2,
+      "detail": {
+        "note_status": 201
+      }
+    },
+    {
+      "step": "ghl_opportunity",
+      "ok": true,
+      "duration_ms": 3,
+      "detail": {
+        "opportunity_id": "opp_7dbdfeed6240458a8350",
+        "created": true
+      }
+    },
+    {
+      "step": "follow_up",
+      "ok": true,
+      "duration_ms": 1,
+      "detail": {
+        "sent": true,
+        "sequence": "emergency_sms_then_call",
+        "status": 201
+      }
+    },
+    {
+      "step": "notify_sales",
+      "ok": true,
+      "duration_ms": 1,
+      "detail": {
+        "notified": true,
+        "channel": "sales_urgent"
+      }
+    }
+  ],
+  "provider_calls": [
+    {
+      "provider": "deterministic",
+      "operation": "qualify",
+      "ok": true,
+      "attempts": 1,
+      "duration_ms": 0.1
+    },
+    {
+      "provider": "ghl",
+      "operation": "contacts.upsert",
+      "ok": true,
+      "attempts": 1,
+      "duration_ms": 0.0
+    },
+    {
+      "provider": "ghl",
+      "operation": "opportunities.ensure",
+      "ok": true,
+      "attempts": 1,
+      "duration_ms": 0.0
+    }
+  ]
+}

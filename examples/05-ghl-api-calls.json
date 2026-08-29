@@ -1,0 +1,271 @@
+{
+  "_note": "Every request and response that actually crossed the wire during this one lead, captured at the transport layer. Bearer token redacted.",
+  "calls": [
+    {
+      "request": {
+        "method": "POST",
+        "url": "http://ghl.mock/contacts/upsert",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "version": "2021-07-28",
+          "authorization": "Bearer <redacted>",
+          "x-correlation-id": "cid_89fb825fd4ed46ea"
+        },
+        "body": {
+          "locationId": "loc_DEMO0000000000000000",
+          "firstName": "Dana",
+          "lastName": "Whitfield",
+          "name": "Dana Whitfield",
+          "source": "leadops:website",
+          "tags": [
+            "leadops",
+            "source-website",
+            "priority-high",
+            "emergency",
+            "call-now"
+          ],
+          "email": "dana.whitfield@example.com",
+          "phone": "+15125550147",
+          "city": "Round Rock, TX",
+          "customFields": [
+            {
+              "field_value": "website",
+              "id": "cf_DEMO_lead_source_00"
+            },
+            {
+              "field_value": "90",
+              "id": "cf_DEMO_lead_score_000"
+            },
+            {
+              "field_value": "high",
+              "id": "cf_DEMO_lead_priority_"
+            },
+            {
+              "field_value": "emergency_repair",
+              "id": "cf_DEMO_service_cat_00"
+            },
+            {
+              "field_value": "Dana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).",
+              "id": "cf_DEMO_ai_summary_000"
+            },
+            {
+              "field_value": "",
+              "id": "cf_DEMO_missing_info_0"
+            },
+            {
+              "field_value": "cid_89fb825fd4ed46ea",
+              "id": "cf_DEMO_correlation_id"
+            },
+            {
+              "field_value": "deterministic",
+              "id": "cf_DEMO_qual_mode_0000"
+            }
+          ]
+        }
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "succeded": true,
+          "new": true,
+          "contact": {
+            "id": "ct_0847bc00aa144616a70a",
+            "locationId": "loc_DEMO0000000000000000",
+            "dateAdded": "2026-08-29T00:00:00.000Z",
+            "firstName": "Dana",
+            "lastName": "Whitfield",
+            "name": "Dana Whitfield",
+            "source": "leadops:website",
+            "tags": [
+              "leadops",
+              "source-website",
+              "priority-high",
+              "emergency",
+              "call-now"
+            ],
+            "email": "dana.whitfield@example.com",
+            "phone": "+15125550147",
+            "city": "Round Rock, TX",
+            "customFields": [
+              {
+                "field_value": "website",
+                "id": "cf_DEMO_lead_source_00"
+              },
+              {
+                "field_value": "90",
+                "id": "cf_DEMO_lead_score_000"
+              },
+              {
+                "field_value": "high",
+                "id": "cf_DEMO_lead_priority_"
+              },
+              {
+                "field_value": "emergency_repair",
+                "id": "cf_DEMO_service_cat_00"
+              },
+              {
+                "field_value": "Dana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).",
+                "id": "cf_DEMO_ai_summary_000"
+              },
+              {
+                "field_value": "",
+                "id": "cf_DEMO_missing_info_0"
+              },
+              {
+                "field_value": "cid_89fb825fd4ed46ea",
+                "id": "cf_DEMO_correlation_id"
+              },
+              {
+                "field_value": "deterministic",
+                "id": "cf_DEMO_qual_mode_0000"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "http://ghl.mock/contacts/ct_0847bc00aa144616a70a/notes",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "version": "2021-07-28",
+          "authorization": "Bearer <redacted>",
+          "x-correlation-id": "cid_89fb825fd4ed46ea"
+        },
+        "body": {
+          "body": "Lead summary (deterministic)\n\nIntent: Urgent repair needed\nCategory: emergency_repair\nPriority: high  |  Score: 90/100\n\nDana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).\n\nRecommended next step: Call within the SLA window.\n\n--- original message ---\nOur furnace stopped working overnight and there is no heat in the house. We have a baby at home so this is urgent - can someone come out today?"
+        }
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "note": {
+            "id": "note_f8b07f7104bf404c94b9",
+            "contactId": "ct_0847bc00aa144616a70a",
+            "body": "Lead summary (deterministic)\n\nIntent: Urgent repair needed\nCategory: emergency_repair\nPriority: high  |  Score: 90/100\n\nDana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).\n\nRecommended next step: Call within the SLA window.\n\n--- original message ---\nOur furnace stopped working overnight and there is no heat in the house. We have a baby at home so this is urgent - can someone come out today?"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "url": "http://ghl.mock/opportunities/search?location_id=loc_DEMO0000000000000000&contact_id=ct_0847bc00aa144616a70a&pipeline_id=pipe_DEMO000000000000000&status=open",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "version": "2021-07-28",
+          "authorization": "Bearer <redacted>",
+          "x-correlation-id": "cid_89fb825fd4ed46ea"
+        },
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "opportunities": [],
+          "meta": {
+            "total": 0
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "http://ghl.mock/opportunities/",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "version": "2021-07-28",
+          "authorization": "Bearer <redacted>",
+          "x-correlation-id": "cid_89fb825fd4ed46ea"
+        },
+        "body": {
+          "locationId": "loc_DEMO0000000000000000",
+          "pipelineId": "pipe_DEMO000000000000000",
+          "pipelineStageId": "stage_DEMO_hot_lead_0000",
+          "contactId": "ct_0847bc00aa144616a70a",
+          "name": "Dana Whitfield - emergency repair",
+          "status": "open",
+          "monetaryValue": 1200.0,
+          "source": "leadops:website"
+        }
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "opportunity": {
+            "id": "opp_7dbdfeed6240458a8350",
+            "locationId": "loc_DEMO0000000000000000",
+            "pipelineId": "pipe_DEMO000000000000000",
+            "pipelineStageId": "stage_DEMO_hot_lead_0000",
+            "contactId": "ct_0847bc00aa144616a70a",
+            "name": "Dana Whitfield - emergency repair",
+            "status": "open",
+            "monetaryValue": 1200.0,
+            "source": "leadops:website"
+          }
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "http://ghl.mock/conversations/messages",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "version": "2021-07-28",
+          "authorization": "Bearer <redacted>",
+          "x-correlation-id": "cid_89fb825fd4ed46ea"
+        },
+        "body": {
+          "type": "SMS",
+          "contactId": "ct_0847bc00aa144616a70a",
+          "message": "Hi Dana - thanks for contacting us about emergency repair. We have your request and someone will call you shortly."
+        }
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "conversationId": "conv_ee6c4eb15d8d43109dbe",
+          "messageId": "msg_a72bb3c9a42049a085a6"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "url": "http://ghl.mock/conversations/messages",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json",
+          "version": "2021-07-28",
+          "authorization": "Bearer <redacted>",
+          "x-correlation-id": "cid_89fb825fd4ed46ea"
+        },
+        "body": {
+          "type": "Email",
+          "contactId": "ct_0847bc00aa144616a70a",
+          "subject": "[HIGH] Dana Whitfield - emergency_repair",
+          "message": "New high-priority lead: Dana Whitfield\nCategory: emergency_repair (score 90/100)\nContact: +15125550147 / dana.whitfield@example.com\nArea: Round Rock, TX\nRespond within: 5 minutes\nRouted by rule: emergency_high_priority - Emergency work is time-priced; a five-minute callback wins the job.\n\nDana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).\n\nOriginal message: Our furnace stopped working overnight and there is no heat in the house. We have a baby at home so this is urgent - can someone come out today?",
+          "html": "New high-priority lead: Dana Whitfield<br>Category: emergency_repair (score 90/100)<br>Contact: +15125550147 / dana.whitfield@example.com<br>Area: Round Rock, TX<br>Respond within: 5 minutes<br>Routed by rule: emergency_high_priority - Emergency work is time-priced; a five-minute callback wins the job.<br><br>Dana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).<br><br>Original message: Our furnace stopped working overnight and there is no heat in the house. We have a baby at home so this is urgent - can someone come out today?",
+          "emailTo": "sales@example.com",
+          "userId": ""
+        }
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "conversationId": "conv_e4b525c38a674df9aeef",
+          "messageId": "msg_472faf047b214baab094"
+        }
+      }
+    }
+  ]
+}

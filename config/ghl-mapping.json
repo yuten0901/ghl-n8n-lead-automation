@@ -1,0 +1,53 @@
+{
+  "$comment": [
+    "Maps this system's canonical vocabulary onto one GoHighLevel sub-account.",
+    "Every id here is a PLACEHOLDER. On a real engagement these are read once from",
+    "GET /locations/{id}/customFields and GET /opportunities/pipelines and pasted in;",
+    "they are account-specific and are the reason a workflow that 'worked in the demo'",
+    "fails on the client's location. scripts/discover_ghl_ids.py prints them for you.",
+    "Ids are configuration, not secrets - they identify, they do not authorise."
+  ],
+  "location_id": "loc_DEMO0000000000000000",
+  "pipeline_id": "pipe_DEMO000000000000000",
+
+  "pipeline_stages": {
+    "new_lead":        "stage_DEMO_new_lead_0000",
+    "needs_info":      "stage_DEMO_needs_info_00",
+    "hot_lead":        "stage_DEMO_hot_lead_0000",
+    "nurture":         "stage_DEMO_nurture_00000",
+    "unqualified":     "stage_DEMO_unqualified_0"
+  },
+
+  "custom_fields": {
+    "lead_source":         { "id": "cf_DEMO_lead_source_00", "key": "contact.lead_source" },
+    "lead_score":          { "id": "cf_DEMO_lead_score_000", "key": "contact.lead_score" },
+    "lead_priority":       { "id": "cf_DEMO_lead_priority_", "key": "contact.lead_priority" },
+    "service_category":    { "id": "cf_DEMO_service_cat_00", "key": "contact.service_category" },
+    "ai_summary":          { "id": "cf_DEMO_ai_summary_000", "key": "contact.ai_summary" },
+    "missing_information": { "id": "cf_DEMO_missing_info_0", "key": "contact.missing_information" },
+    "correlation_id":      { "id": "cf_DEMO_correlation_id", "key": "contact.correlation_id" },
+    "qualification_mode":  { "id": "cf_DEMO_qual_mode_0000", "key": "contact.qualification_mode" }
+  },
+
+  "tags": {
+    "always": ["leadops"],
+    "by_source": {
+      "website": "source-website",
+      "meta":    "source-meta",
+      "google":  "source-google",
+      "partner": "source-partner"
+    },
+    "by_priority": {
+      "high":   "priority-high",
+      "medium": "priority-medium",
+      "low":    "priority-low"
+    },
+    "degraded": "ai-fallback-used"
+  },
+
+  "calendar_id": "cal_DEMO0000000000000000",
+  "assigned_user_ids": {
+    "sales_primary": "usr_DEMO_primary_000000",
+    "sales_overflow": "usr_DEMO_overflow_00000"
+  }
+}

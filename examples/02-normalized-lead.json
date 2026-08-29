@@ -1,0 +1,17 @@
+{
+  "_note": "After normalization. Note the lowercased email and the E.164 phone - this is what makes GoHighLevel's own duplicate matching work.",
+  "external_id": "ws_2026082901",
+  "source": "website",
+  "first_name": "Dana",
+  "last_name": "Whitfield",
+  "email": "dana.whitfield@example.com",
+  "phone": "+15125550147",
+  "service": "Heating repair",
+  "message": "Our furnace stopped working overnight and there is no heat in the house. We have a baby at home so this is urgent - can someone come out today?",
+  "location": "Round Rock, TX",
+  "submitted_at": "2026-08-29T07:14:22Z",
+  "extra": {
+    "page_url": "https://example.com/heating-repair",
+    "utm_campaign": "furnace-repair-aug"
+  }
+}

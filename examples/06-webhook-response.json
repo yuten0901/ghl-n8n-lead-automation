@@ -1,0 +1,39 @@
+{
+  "_note": "What the webhook caller (n8n) receives. n8n branches on `status` and `routing` and needs nothing else.",
+  "status": "succeeded",
+  "correlation_id": "cid_89fb825fd4ed46ea",
+  "event_id": "evt_f4fb22e2400f4bc8aaa4",
+  "idempotency_key": "website:ws_2026082901",
+  "duplicate_of": null,
+  "contact_id": "ct_0847bc00aa144616a70a",
+  "opportunity_id": "opp_7dbdfeed6240458a8350",
+  "qualification": {
+    "intent": "Urgent repair needed",
+    "service_category": "emergency_repair",
+    "priority": "high",
+    "qualification_score": 90,
+    "missing_information": [],
+    "summary": "Dana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).",
+    "recommended_action": "Call within the SLA window.",
+    "degraded": false,
+    "degraded_reason": "",
+    "provider": "deterministic",
+    "model": "rules-v1"
+  },
+  "routing": {
+    "rule_id": "emergency_high_priority",
+    "pipeline_stage": "hot_lead",
+    "opportunity_status": "open",
+    "monetary_value": 1200.0,
+    "tags": [
+      "emergency",
+      "call-now"
+    ],
+    "follow_up_sequence": "emergency_sms_then_call",
+    "notify_sales": true,
+    "notify_channel": "sales_urgent",
+    "sla_minutes": 5,
+    "reason": "Emergency work is time-priced; a five-minute callback wins the job."
+  },
+  "error": null
+}

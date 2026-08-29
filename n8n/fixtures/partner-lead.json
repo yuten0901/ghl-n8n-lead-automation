@@ -1,0 +1,16 @@
+{
+  "event_id": "partner_evt_20260829_0004",
+  "partner_id": "homeadvisor_style_partner",
+  "lead": {
+    "external_id": "PA-88213",
+    "first_name": "Alicia",
+    "last_name": "Nowak",
+    "email": "alicia.nowak@example.com",
+    "phone": "+15125550194",
+    "service_type": "Warranty claim",
+    "details": "The compressor we had installed under warranty last year is making a loud noise again. Ticket reference WR-4471.",
+    "location": "Georgetown, TX",
+    "submitted_at": "2026-08-29T11:20:44Z",
+    "partner_score": 82
+  }
+}

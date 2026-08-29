@@ -1,0 +1,110 @@
+# Optional. The demo and the tests need none of this - `python scripts/demo.py`
+# runs the whole system in one process with no services at all.
+#
+# Compose is here for the one thing that genuinely needs containers: driving the
+# system from a real n8n instance over HTTP, which is what the screenshots in
+# docs/screenshots/ were taken from.
+#
+#   docker compose up --build        service + mock GHL + PostgreSQL
+#   docker compose --profile n8n up  ...and n8n on http://localhost:5678
+#
+# Honest note: this file was written but NOT executed while building the
+# repository - no Docker daemon was available in that environment. The Python
+# paths it invokes are the same ones CI runs on every push, so the risk is in
+# the Compose wiring rather than in the application. docs/demo.md gives the
+# no-Docker path, which is the one that is verified.
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: leadops
+      POSTGRES_PASSWORD: leadops_local_password
+      POSTGRES_DB: leadops
+    ports: ["5432:5432"]
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U leadops -d leadops"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ghl-mock:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >-
+      uvicorn mock.ghl_mock.server:app --host 0.0.0.0 --port 8081
+    ports: ["8081:8081"]
+    healthcheck:
+      # /_mock/state needs the auth headers the real API needs, which doubles as
+      # a check that the header guard is actually on.
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import urllib.request as r;
+          req=r.Request('http://127.0.0.1:8081/_mock/state',
+          headers={'Version':'2021-07-28','Authorization':'Bearer healthcheck_token'});
+          r.urlopen(req, timeout=3)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >-
+      uvicorn leadops.api.main:app --host 0.0.0.0 --port 8000
+    environment:
+      DATABASE_URL: postgresql+asyncpg://leadops:leadops_local_password@db:5432/leadops
+      GHL_BASE_URL: http://ghl-mock:8081
+      # A placeholder, not a secret: the mock only checks that a bearer token is
+      # present. Point GHL_BASE_URL at the real API and supply a real token to
+      # talk to a live sub-account.
+      GHL_ACCESS_TOKEN: local_compose_placeholder_token
+      GHL_LOCATION_ID: loc_DEMO0000000000000000
+      GHL_PIPELINE_ID: pipe_DEMO000000000000000
+      AI_PROVIDER: deterministic
+      LOG_FORMAT: json
+      # Uncomment and set in a .env file to exercise signature verification:
+      # WEBHOOK_SIGNING_SECRET: ${WEBHOOK_SIGNING_SECRET}
+      # REQUIRE_SIGNATURE: "true"
+    ports: ["8000:8000"]
+    depends_on:
+      db:
+        condition: service_healthy
+      ghl-mock:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request as r; r.urlopen('http://127.0.0.1:8000/healthz', timeout=3)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  n8n:
+    # Opt-in: `docker compose --profile n8n up`. n8n is a large image and is not
+    # needed to run the tests or the demo.
+    profiles: ["n8n"]
+    image: n8nio/n8n:latest
+    environment:
+      # The URL the workflow's HTTP Request node calls. Inside the Compose
+      # network the service is reachable by service name, not localhost.
+      LEADOPS_BASE_URL: http://service:8000
+      GHL_LOCATION_ID: loc_DEMO0000000000000000
+      GHL_CALENDAR_ID: cal_DEMO0000000000000000
+      N8N_SECURE_COOKIE: "false"
+      GENERIC_TIMEZONE: America/Chicago
+      # Lets the Code nodes and $env expressions in the workflow resolve.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+    ports: ["5678:5678"]
+    volumes:
+      # Holds credentials once you create them. Gitignored - never commit it.
+      - ./n8n-data:/home/node/.n8n
+    depends_on:
+      service:
+        condition: service_started
+
+volumes:
+  db-data:
