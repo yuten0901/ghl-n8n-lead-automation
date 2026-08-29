@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/yuten0901/ghl-n8n-lead-automation/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)
-![Tests](https://img.shields.io/badge/tests-218-brightgreen)
+![Tests](https://img.shields.io/badge/tests-219-brightgreen)
 ![n8n nodes](https://img.shields.io/badge/n8n-20%20nodes-ff6d5a)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -99,7 +99,7 @@ flowchart TB
 
 **The one design decision worth explaining.** n8n orchestrates and makes the flow visible; the correctness-critical logic — idempotency, normalization, LLM output validation, GHL write semantics — lives in a versioned, unit-tested service that n8n calls over HTTP.
 
-Pure-n8n is faster to build and is the right answer for a simple flow. It is the wrong answer here, because the parts that must be *right* are the parts that are hardest to test and review inside a workflow UI: a race between two simultaneous deliveries, a retry that must resume rather than restart, a model that returns prose instead of JSON. Those are 218 automated tests in this repository. [`docs/architecture.md`](docs/architecture.md#why-not-pure-n8n) sets out the trade-off, including when I would *not* choose this split.
+Pure-n8n is faster to build and is the right answer for a simple flow. It is the wrong answer here, because the parts that must be *right* are the parts that are hardest to test and review inside a workflow UI: a race between two simultaneous deliveries, a retry that must resume rather than restart, a model that returns prose instead of JSON. Those are 219 automated tests in this repository. [`docs/architecture.md`](docs/architecture.md#why-not-pure-n8n) sets out the trade-off, including when I would *not* choose this split.
 
 ---
 
@@ -248,7 +248,7 @@ Details in [`docs/security.md`](docs/security.md).
 ## Testing
 
 ```bash
-pytest -q          # 218 tests, ~6 seconds, no network
+pytest -q          # 219 tests, ~6 seconds, no network
 ruff check . && ruff format --check .
 python scripts/scan_secrets.py
 ```

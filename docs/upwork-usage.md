@@ -81,7 +81,7 @@ Second differentiator, for briefs mentioning a messy CRM: **the returning-lead c
 
 **Opening, general:**
 
-> I build lead automation that survives the boring failures — duplicate webhooks, a CRM API that 500s for ninety seconds, an LLM that returns prose instead of JSON. Here's a working example with 218 tests covering exactly those cases: [link]. It runs locally in 30 seconds with no accounts or API keys.
+> I build lead automation that survives the boring failures — duplicate webhooks, a CRM API that 500s for ninety seconds, an LLM that returns prose instead of JSON. Here's a working example with 219 tests covering exactly those cases: [link]. It runs locally in 30 seconds with no accounts or API keys.
 
 **When the brief mentions duplicates or a messy CRM:**
 

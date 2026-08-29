@@ -184,7 +184,7 @@ Without Docker: run the service and the mock as in section 2, install n8n separa
 ## 4. Tests
 
 ```bash
-pytest -q                                    # 218 tests, ~6 seconds, no network
+pytest -q                                    # 219 tests, ~6 seconds, no network
 pytest -q tests/unit                         # pure logic
 pytest -q tests/integration                  # full pipeline against the mock GHL
 pytest -q -k duplicate                       # just the idempotency cases
