@@ -1,0 +1,8 @@
+# Normalise line endings in the repository, whatever the contributor's OS.
+# Without this, a Windows checkout commits CRLF and every diff looks rewritten.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
