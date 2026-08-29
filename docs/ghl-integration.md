@@ -180,7 +180,7 @@ Text fields on the sub-account:
 
 ## First contact with a real account
 
-The short list of things to verify the first time this touches a paid sub-account. None require code changes if they hold.
+The eight things to verify the first time this touches a paid sub-account. None require code changes if they hold.
 
 1. **`Version: 2021-07-28` is still current.** If GoHighLevel has published a newer version date, read its changelog before bumping — the pin exists so this is a decision.
 2. **`POST /contacts/upsert` returns `new` and a contact id in the shape above.** If the id moves, `_extract_contact_id` already handles the two known shapes; add a third if needed.
@@ -189,6 +189,7 @@ The short list of things to verify the first time this touches a paid sub-accoun
 5. **429 carries `Retry-After`.** If it does not, our jittered backoff already covers it; confirm which.
 6. **Custom field writes accept `{"id", "field_value"}`.** Some accounts prefer `{"key", "field_value"}` — the mapping supports both, per field.
 7. **`POST /conversations/messages` requires a conversation to exist first** on some account configurations. If so, the first-touch message needs a conversation create ahead of it — an additive change to `operations.send_follow_up`.
+8. **The internal sales alert actually reaches a salesperson.** `notify_sales` posts to `/conversations/messages` with the *customer's* `contactId` plus `emailTo` and `userId`, expecting GoHighLevel to redirect delivery to the internal address. Those two fields are **not part of the request shape documented above**, and the local mock stores the body without validating it — so this is an assumption this repository has never tested. Check it before the first live lead: the failure mode is a customer receiving an email that begins "New high-priority lead: <their own name>". If it does not redirect, the fix is a separate internal channel (Slack webhook or SMTP) rather than a GoHighLevel conversation.
 
 Run `python scripts/discover_ghl_ids.py` first; it exercises four read-only endpoints and will surface auth or scope problems before any write is attempted.
 

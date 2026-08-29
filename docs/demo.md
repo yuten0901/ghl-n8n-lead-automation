@@ -184,7 +184,7 @@ Without Docker: run the service and the mock as in section 2, install n8n separa
 ## 4. Tests
 
 ```bash
-pytest -q                                    # 219 tests, ~6 seconds, no network
+pytest -q                                    # 218 tests, ~11 seconds, no network
 pytest -q tests/unit                         # pure logic
 pytest -q tests/integration                  # full pipeline against the mock GHL
 pytest -q -k duplicate                       # just the idempotency cases
@@ -220,4 +220,4 @@ python scripts/discover_ghl_ids.py > config/ghl-mapping.json   # read-only
 
 `discover_ghl_ids.py` reads the location's custom fields, pipelines, stages, calendars and users and prints a filled mapping file, reporting anything it could not match on stderr. It issues only GET requests.
 
-Then read [`ghl-integration.md`](ghl-integration.md#first-contact-with-a-real-account) — seven things to verify on first contact with a live account, none of which should require code changes if they hold.
+Then read [`ghl-integration.md`](ghl-integration.md#first-contact-with-a-real-account) — eight things to verify on first contact with a live account, none of which should require code changes if they hold.

@@ -31,7 +31,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from leadops.ai.providers import build_provider
 from leadops.ai.qualify import qualify
 from leadops.config import Settings
-from leadops.errors import LeadOpsError, ValidationFailed
+from leadops.errors import LeadOpsError, UpstreamUnavailable, ValidationFailed
 from leadops.ghl import operations as ops
 from leadops.ghl.client import GHLClient
 from leadops.ghl.mapping import GHLMapping
@@ -123,6 +123,23 @@ async def _step(
             log.info("step.skipped", extra={"step": name, "correlation_id": ctx.correlation_id})
             ctx.steps.append(StepResult(name=name, ok=True, output=cached, attempts=0))
             return cached
+
+    # Close the transaction that the lookup above opened, before calling out.
+    #
+    # This line is not tidiness, and leaving it out was a real defect an
+    # independent review caught. `storage/db.py` makes every SQLite transaction
+    # BEGIN IMMEDIATE, which is what stops writers deadlocking - but it also
+    # means the *read* on the line above takes the database's write lock. Without
+    # this commit that lock is held for the whole duration of the GoHighLevel
+    # call, so one slow vendor request blocks every other lead in flight, and a
+    # request that takes longer than `busy_timeout` makes them fail outright with
+    # "database is locked".
+    #
+    # Measured before the fix: a 3-second call blocked a competing write for
+    # 2.74s; a 7-second call failed it. GHL calls retry up to 4 times with up to
+    # 8s of backoff, so "longer than five seconds" is ordinary operation, not an
+    # edge case.
+    await _commit(ctx.session)
 
     started = time.perf_counter()
     try:
@@ -474,6 +491,46 @@ async def process_lead(
             ctx,
             event=event,
             exc=exc,
+            payload=payload,
+            source=source,
+            lead=lead,
+            qualification=qualification,
+            routing=routing,
+            contact_id=contact_id,
+            opportunity_id=opportunity_id,
+        )
+
+    except Exception as exc:  # noqa: BLE001
+        # An unexpected exception is a bug, not a business outcome - but leaving
+        # it to propagate loses the lead, which is worse than the bug.
+        #
+        # The event row is already committed as `processing` with a live lease.
+        # If this escapes, the HTTP layer answers 500 and the row stays
+        # `processing` until the lease expires. A redelivery arriving inside that
+        # window is reported as a duplicate and answered 200 - so the sender
+        # stops redelivering, and the lead is gone with no dead letter and no
+        # alert. An independent review found this path; it is the quietest way
+        # this system could lose money.
+        #
+        # Wrapping it as retryable puts the event into `failed`, which
+        # `claim_event` reclaims on the next delivery, and returns 202 so the
+        # sender keeps trying.
+        wrapped = UpstreamUnavailable(
+            f"unexpected {type(exc).__name__} while processing the lead",
+            detail={"exception": type(exc).__name__, "message": str(exc)[:300]},
+        )
+        log.exception(
+            "event.unexpected_error",
+            extra={
+                "correlation_id": ctx.correlation_id,
+                "event_id": event.id,
+                "exception": type(exc).__name__,
+            },
+        )
+        return await _fail(
+            ctx,
+            event=event,
+            exc=wrapped,
             payload=payload,
             source=source,
             lead=lead,

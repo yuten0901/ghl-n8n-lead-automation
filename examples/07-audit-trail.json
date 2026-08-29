@@ -1,7 +1,7 @@
 {
   "_note": "What GET /admin/events/{id} returns: every step with timings and every outbound call with attempt counts. This is the troubleshooting surface.",
-  "event_id": "evt_f4fb22e2400f4bc8aaa4",
-  "correlation_id": "cid_89fb825fd4ed46ea",
+  "event_id": "evt_32aa7ce6313747f9b5e3",
+  "correlation_id": "cid_c6c6e1d823274055",
   "steps": [
     {
       "step": "normalize",
@@ -27,9 +27,9 @@
     {
       "step": "lead_identity",
       "ok": true,
-      "duration_ms": 5,
+      "duration_ms": 6,
       "detail": {
-        "lead_id": "lead_61fcfa8a318049b4b521",
+        "lead_id": "lead_7129827d9ebd42e08a9f",
         "identity_key": "loc_DEMO0000000000000000:email:dana.whitfield@example.com",
         "is_new_person": true,
         "submission_count": 1,
@@ -39,7 +39,7 @@
     {
       "step": "ai_qualification",
       "ok": true,
-      "duration_ms": 1,
+      "duration_ms": 2,
       "detail": {
         "qualification": {
           "intent": "Urgent repair needed",
@@ -81,9 +81,9 @@
     {
       "step": "ghl_contact",
       "ok": true,
-      "duration_ms": 7,
+      "duration_ms": 9,
       "detail": {
-        "contact_id": "ct_0847bc00aa144616a70a",
+        "contact_id": "ct_17d53ebce22840c293f5",
         "created": true
       }
     },
@@ -98,9 +98,9 @@
     {
       "step": "ghl_opportunity",
       "ok": true,
-      "duration_ms": 3,
+      "duration_ms": 5,
       "detail": {
-        "opportunity_id": "opp_7dbdfeed6240458a8350",
+        "opportunity_id": "opp_53671de016004428884a",
         "created": true
       }
     },

@@ -466,3 +466,101 @@ class TestObservability:
             providers = {c.provider for c in calls}
             assert "ghl" in providers
             assert "deterministic" in providers
+
+
+class TestUnexpectedFailures:
+    """A bug in our own code must not silently lose a lead.
+
+    Found in review: an exception that was not a `LeadOpsError` escaped
+    `process_lead`, so the HTTP layer answered 500 while the event row stayed
+    `processing` with a live lease. The next redelivery landed inside that lease,
+    was reported as a duplicate, and answered 200 - at which point the sender
+    stopped redelivering. No dead letter, no alert, no lead.
+    """
+
+    async def test_an_unexpected_exception_becomes_a_retryable_failure(
+        self, settings, ghl_client, mapping, table, mock_ghl
+    ) -> None:
+        async def exploding_upsert(*_args, **_kwargs):
+            raise RuntimeError("a bug nobody anticipated")
+
+        original = type(ghl_client).upsert_contact
+        type(ghl_client).upsert_contact = exploding_upsert
+        try:
+            result = await run(
+                "website",
+                "website-lead-standard.json",
+                settings=settings,
+                ghl=ghl_client,
+                mapping=mapping,
+                table=table,
+            )
+        finally:
+            type(ghl_client).upsert_contact = original
+
+        assert result.status is EventStatus.FAILED
+        assert result.error["retryable"] is True
+        assert "RuntimeError" in result.error["detail"]["exception"]
+
+    async def test_the_event_does_not_stay_stuck_in_processing(
+        self, settings, ghl_client, mapping, table, mock_ghl
+    ) -> None:
+        """`failed` is reclaimable by the next delivery; `processing` is not,
+        until its lease expires - and by then the sender has given up."""
+
+        async def exploding_upsert(*_args, **_kwargs):
+            raise RuntimeError("a bug nobody anticipated")
+
+        original = type(ghl_client).upsert_contact
+        type(ghl_client).upsert_contact = exploding_upsert
+        try:
+            result = await run(
+                "website",
+                "website-lead-standard.json",
+                settings=settings,
+                ghl=ghl_client,
+                mapping=mapping,
+                table=table,
+            )
+        finally:
+            type(ghl_client).upsert_contact = original
+
+        async with session_scope() as session:
+            event = await repo.get_event(session, result.event_id)
+            assert event.status == EventStatus.FAILED.value
+
+    async def test_the_lead_is_recovered_once_the_bug_is_fixed(
+        self, settings, ghl_client, mapping, table, mock_ghl
+    ) -> None:
+        """The whole point: the redelivery after a deploy still lands the lead."""
+
+        async def exploding_upsert(*_args, **_kwargs):
+            raise RuntimeError("a bug nobody anticipated")
+
+        original = type(ghl_client).upsert_contact
+        type(ghl_client).upsert_contact = exploding_upsert
+        try:
+            first = await run(
+                "website",
+                "website-lead-standard.json",
+                settings=settings,
+                ghl=ghl_client,
+                mapping=mapping,
+                table=table,
+            )
+        finally:
+            type(ghl_client).upsert_contact = original
+
+        assert first.status is EventStatus.FAILED
+        assert mock_ghl.contacts == {}
+
+        second = await run(
+            "website",
+            "website-lead-standard.json",
+            settings=settings,
+            ghl=ghl_client,
+            mapping=mapping,
+            table=table,
+        )
+        assert second.status is EventStatus.SUCCEEDED
+        assert len(mock_ghl.contacts) == 1

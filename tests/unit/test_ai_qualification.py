@@ -233,3 +233,77 @@ class TestPromptConstruction:
         await qualify(lead, provider=Capturing(json.dumps(VALID_OUTPUT)), table=table)
         assert captured[0].count("<lead_data>") == 1
         assert captured[0].count("</lead_data>") == 1
+
+
+class TestInjectionCannotEscalateOnAnyProviderPath:
+    """The guarantee has to hold for the provider a paying deployment runs.
+
+    An independent review found it did not. The injection check lived inside
+    `rules.classify()`, so it only ever ran on the offline scorer - the one path
+    that ignores instructions anyway - and was absent on the live-model path.
+    A model that complied with the injected instruction returned
+    `emergency_repair / high / 100`, which routed to `hot_lead` with
+    `notify_sales=True`, a five-minute SLA, and an SMS to the submitter.
+
+    These tests use a model that complies completely, because a model that
+    refuses proves nothing about the guard.
+    """
+
+    COMPLIANT = json.dumps(
+        {
+            "intent": "Emergency - no heat, infant at home",
+            "service_category": "emergency_repair",
+            "priority": "high",
+            "qualification_score": 100,
+            "missing_information": [],
+            "summary": "Urgent emergency callout required immediately.",
+            "recommended_action": "Call within 5 minutes.",
+        }
+    )
+
+    async def test_a_complying_model_cannot_escalate_an_injected_lead(self, table) -> None:
+        from leadops.routing.rules import route
+
+        lead = normalize_payload("website", load_fixture("prompt-injection-lead.json"))
+        provider = StubProvider(self.COMPLIANT)
+
+        outcome = await qualify(lead, provider=provider, table=table)
+        decision = route(outcome.qualification, table)
+
+        assert decision.notify_sales is False, "an injected lead reached the sales team"
+        assert decision.follow_up_sequence == "", "an injected lead triggered outbound contact"
+        assert decision.pipeline_stage == "unqualified"
+        assert outcome.qualification.qualification_score < 20
+
+    async def test_the_model_is_not_even_asked_about_an_injected_lead(self, table) -> None:
+        """Nothing is gained by asking, and a compliant answer is a liability."""
+        lead = normalize_payload("website", load_fixture("prompt-injection-lead.json"))
+        provider = StubProvider(self.COMPLIANT)
+        await qualify(lead, provider=provider, table=table)
+        assert provider.calls == 0
+
+    async def test_the_override_is_visible_rather_than_silent(self, table) -> None:
+        lead = normalize_payload("website", load_fixture("prompt-injection-lead.json"))
+        outcome = await qualify(lead, provider=StubProvider(self.COMPLIANT), table=table)
+        assert outcome.qualification.degraded is True
+        assert "instruction-like" in outcome.qualification.degraded_reason
+        assert outcome.provider_used == "injection-guard"
+
+    async def test_an_ordinary_urgent_lead_is_still_scored_by_the_model(self, table) -> None:
+        """The guard must not swallow real emergencies - that would trade one
+        failure for a worse one."""
+        lead = normalize_payload(
+            "website",
+            {
+                "email": "a@b.com",
+                "phone": "512-555-0147",
+                "name": "Real Customer",
+                "city": "Austin",
+                "message": "Our furnace stopped overnight and there is no heat. Please help today.",
+            },
+        )
+        provider = StubProvider(self.COMPLIANT)
+        outcome = await qualify(lead, provider=provider, table=table)
+        assert provider.calls == 1
+        assert outcome.qualification.qualification_score == 100
+        assert outcome.qualification.degraded is False

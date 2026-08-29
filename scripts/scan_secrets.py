@@ -83,10 +83,22 @@ def is_allowed(match: re.Match[str]) -> bool:
 
 
 def files_to_scan() -> list[pathlib.Path]:
-    """Prefer git's view of the tree - it is exactly what would be pushed."""
+    """Everything git would let you commit: tracked *and* untracked-not-ignored.
+
+    `--others --exclude-standard` is load-bearing, and its absence was a real
+    defect found in review. With plain `git ls-files` the scanner saw only
+    tracked files, so a credential sitting in a file nobody had `git add`ed yet
+    was invisible - which is exactly the state a secret is in just before it
+    gets committed.
+
+    It also quietly broke the CI step that plants a fake key and requires the
+    scanner to reject it: the probe file is untracked, so the scan passed, so
+    the step concluded the scanner was broken and failed the build. The check
+    written to prove the scanner worked was where the gap surfaced.
+    """
     try:
         listing = subprocess.run(
-            ["git", "ls-files"],
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
             cwd=REPO,
             capture_output=True,
             text=True,

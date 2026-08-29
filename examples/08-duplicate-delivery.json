@@ -2,12 +2,12 @@
   "_note": "The same webhook delivered twice. Status is 'duplicate', the original contact id is returned, and GoHighLevel was called once - not twice.",
   "response": {
     "status": "duplicate",
-    "correlation_id": "cid_393d19e42b494fa7",
-    "event_id": "evt_f4fb22e2400f4bc8aaa4",
+    "correlation_id": "cid_363d8aa73b7a48c4",
+    "event_id": "evt_32aa7ce6313747f9b5e3",
     "idempotency_key": "website:ws_2026082901",
-    "duplicate_of": "evt_f4fb22e2400f4bc8aaa4",
-    "contact_id": "ct_0847bc00aa144616a70a",
-    "opportunity_id": "opp_7dbdfeed6240458a8350",
+    "duplicate_of": "evt_32aa7ce6313747f9b5e3",
+    "contact_id": "ct_17d53ebce22840c293f5",
+    "opportunity_id": "opp_53671de016004428884a",
     "qualification": {
       "intent": "Urgent repair needed",
       "service_category": "emergency_repair",

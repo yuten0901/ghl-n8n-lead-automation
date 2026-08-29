@@ -12,16 +12,28 @@ import json
 import re
 import subprocess
 import sys
-
-import pytest
+from pathlib import Path
 
 from tests.conftest import REPO_ROOT
 
-MARKDOWN = sorted(
-    path
-    for path in REPO_ROOT.rglob("*.md")
-    if not {".venv", "node_modules", ".git"} & set(path.relative_to(REPO_ROOT).parts)
-)
+
+def _is_ours(path: Path) -> bool:
+    """Exclude dependency trees and anything in a dot-directory.
+
+    The dot-directory rule matters more than it looks: pytest writes
+    `.pytest_cache/README.md` at the end of a run, so on the *second* run that
+    file joined this list. When the list drove a parametrize, that silently
+    changed the suite's own test count and broke the count assertion below - a
+    green first run and a red second run, and red on every CI checkout after the
+    cache was restored.
+    """
+    parts = path.relative_to(REPO_ROOT).parts
+    if any(part.startswith(".") for part in parts):
+        return False
+    return not {"venv", "node_modules", "site-packages"} & set(parts)
+
+
+MARKDOWN = sorted(path for path in REPO_ROOT.rglob("*.md") if _is_ours(path))
 
 # [text](target) - skip anchors, mailto and absolute URLs; those cannot be
 # checked offline, and a test that needs the network is a test that flakes.
@@ -33,16 +45,24 @@ def read(path) -> str:
 
 
 class TestLinksResolve:
-    @pytest.mark.parametrize("document", MARKDOWN, ids=lambda p: str(p.relative_to(REPO_ROOT)))
-    def test_every_relative_link_points_at_something_that_exists(self, document) -> None:
+    def test_every_relative_link_points_at_something_that_exists(self) -> None:
+        """One test over all documents, deliberately not parametrized.
+
+        Parametrizing over files makes the suite's *size* a function of how many
+        documents exist, which then collides with the test-count assertion below:
+        adding a single markdown file turned CI red for a reason that had nothing
+        to do with the file. Reporting every broken link at once is also more
+        useful than failing on the first document that has one.
+        """
         broken: list[str] = []
-        for target in LINK.findall(read(document)):
-            path_part = target.split("#", 1)[0]
-            if not path_part:
-                continue
-            if not (document.parent / path_part).resolve().exists():
-                broken.append(target)
-        assert not broken, f"{document.relative_to(REPO_ROOT)} -> {broken}"
+        for document in MARKDOWN:
+            for target in LINK.findall(read(document)):
+                path_part = target.split("#", 1)[0]
+                if not path_part:
+                    continue
+                if not (document.parent / path_part).resolve().exists():
+                    broken.append(f"{document.relative_to(REPO_ROOT)} -> {target}")
+        assert not broken, "broken relative links: " + "; ".join(broken)
 
     def test_readme_links_to_every_document(self) -> None:
         """A doc nobody links to is a doc nobody reads."""

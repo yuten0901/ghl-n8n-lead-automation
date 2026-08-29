@@ -8,7 +8,7 @@ What this does not do. Written so a client does not have to discover any of it a
 
 | | Status |
 |---|---|
-| GoHighLevel API | Implemented against the documented v2 API, exercised against a local mock. **Never called a paid sub-account.** [Seven things to verify on first contact.](ghl-integration.md#first-contact-with-a-real-account) |
+| GoHighLevel API | Implemented against the documented v2 API, exercised against a local mock. **Never called a paid sub-account.** [Eight things to verify on first contact.](ghl-integration.md#first-contact-with-a-real-account) |
 | Anthropic / OpenAI | Clients implemented and configuration-selected. Request construction and response handling are tested through a stubbed transport; **no live call was made.** |
 | n8n runtime | Workflows are importable and structurally validated in CI. **CI does not execute them** — that needs a running n8n. |
 | Docker Compose | Written but **not executed**; no Docker daemon in the build environment. YAML validity is checked. The non-Docker paths in [`demo.md`](demo.md) are the verified ones. |
@@ -39,6 +39,8 @@ Each of these is a judgement call, not an oversight.
 
 **Body-hash idempotency keys.** When a source sends no delivery id and no event id, the key is a hash of the body. Two genuinely distinct submissions with byte-identical bodies, no id and no timestamp would collapse into one. In practice payloads carry a timestamp. `/admin/stats` reports how many events relied on the weak derivation, so the exposure is measurable rather than assumed.
 
+**`ensure_opportunity` is search-then-create.** Contacts are safe — GoHighLevel's `upsert` resolves the race server-side, and the local `leads` table backs it up. Opportunities have no equivalent: the code searches for an open opportunity and creates one if it finds none, so two *different* events for the same person arriving simultaneously can both find nothing and both create a card. The window is small and the outcome is cosmetic rather than lossy (a duplicate card a human closes), which is why it is documented rather than fixed — closing it properly needs either a GHL-side constraint that does not exist or an advisory lock keyed on the contact. The README used to claim "no check-then-act anywhere", which was not true of this path; it now says so.
+
 **Tags accumulate in GoHighLevel.** Upsert unions tags rather than replacing them, so a lead that arrives `priority-medium` and later `priority-high` carries both. That is platform behaviour; the `lead_priority` custom field is authoritative because it is overwritten. Making tags mutually exclusive costs an extra API call per lead against the rate limit — a trade-off that should be the client's call, so it is not made silently. [Detail.](ghl-integration.md#known-behaviours-worth-stating)
 
 **The deterministic scorer is English-only keyword matching.** Sarcasm, unusual phrasing and other languages defeat it. That is exactly the gap the LLM closes, which is why the model is the default in a paid deployment and the rules are the safety net — but a deployment running fallback-only should know its ceiling.
@@ -59,6 +61,7 @@ Each of these is a judgement call, not an oversight.
 2. A retention policy for `raw_payload`.
 3. A real secret manager instead of a `.env` file.
 4. TLS termination and edge rate limiting.
-5. Alerting on `unverified_signatures` and `open_dead_letters` — both are already exposed; nothing is watching them.
-6. PostgreSQL, if more than one worker.
-7. `python scripts/discover_ghl_ids.py` against the client's location, and a first-contact pass through the [seven verification items](ghl-integration.md#first-contact-with-a-real-account).
+5. Alerting on `unverified_signatures`, `open_dead_letters` and `stale_processing` — all three are exposed on `/admin/stats`; nothing is watching them.
+6. **A sweeper for abandoned events.** `PROCESSING_LEASE_SECONDS` is only ever *read*, by `claim_event`, when a redelivery happens to arrive. If a worker dies and the sender never redelivers, the event sits in `processing` for good. `/admin/stats` now counts those so they are at least visible; a scheduled job that flips expired leases back to `failed` is the actual fix.
+7. PostgreSQL, if more than one worker.
+8. `python scripts/discover_ghl_ids.py` against the client's location, and a first-contact pass through the [eight verification items](ghl-integration.md#first-contact-with-a-real-account).

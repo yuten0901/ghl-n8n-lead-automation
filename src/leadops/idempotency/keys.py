@@ -66,7 +66,8 @@ def event_idempotency_key(
     hidden: two *genuinely distinct* submissions with byte-identical bodies and no
     id and no timestamp collapse into one. In practice payloads carry a timestamp,
     which separates them. Sources without one should send an idempotency header —
-    `docs/architecture.md` says so, and `/healthz` reports which sources are weak.
+    `docs/architecture.md` says so, and `/admin/stats` counts how many events
+    relied on the weak derivation.
     """
     normalized_headers = {str(k).lower(): str(v) for k, v in (headers or {}).items()}
 
@@ -112,5 +113,6 @@ WEAK_DERIVATIONS = frozenset({"body_hash"})
 
 def is_weak(derivation: str) -> bool:
     """True when the key came from hashing the body rather than from a real id.
-    Surfaced in logs and in /healthz so the weakness is visible, not assumed away."""
+    Surfaced in logs and counted by /admin/stats, so the weakness is visible
+    rather than assumed away."""
     return derivation in WEAK_DERIVATIONS

@@ -59,25 +59,49 @@ def _haystack(lead: CanonicalLead) -> str:
     return " ".join([lead.service, lead.message, str(lead.extra.get("notes", ""))]).strip()
 
 
+def looks_like_injection(lead: CanonicalLead) -> bool:
+    """True when the lead body contains text shaped like instructions to a model.
+
+    Lives here, but is called from `qualify()` on **every** provider path. It
+    used to be reachable only through `classify()`, which meant the protection
+    existed exactly where it was least needed - the offline scorer that ignores
+    instructions anyway - and was absent on the live-model path that a paying
+    deployment actually runs. An independent review found that, and it was a
+    real hole: a compliant model returning
+    `emergency_repair / high / 100` for an injected lead routed straight to the
+    sales team with a five-minute SLA and an SMS to the submitter.
+
+    This is a **heuristic**, not a boundary. It catches the obvious shapes. See
+    `injection_verdict()` for what happens when it fires, and
+    docs/ai-qualification.md for what is and is not actually guaranteed.
+    """
+    return bool(_INJECTION.search(_haystack(lead)))
+
+
+def injection_verdict() -> Qualification:
+    """The classification an injected lead gets, whatever the model said."""
+    return Qualification(
+        intent="Submission contains instruction-like text aimed at the classifier",
+        service_category="other",
+        priority=Priority.LOW,
+        qualification_score=5,
+        missing_information=["genuine service request"],
+        summary=(
+            "The message body contains text shaped like instructions to an AI "
+            "system rather than a service enquiry. Flagged for human review; "
+            "no automated follow-up sent."
+        ),
+        recommended_action="Review manually before any outbound contact.",
+        provider="deterministic",
+    )
+
+
 def classify(lead: CanonicalLead) -> Qualification:
     """Score and categorise a lead with no external call."""
     text = _haystack(lead)
 
-    if _INJECTION.search(text):
-        return Qualification(
-            intent="Submission contains instruction-like text aimed at the classifier",
-            service_category="other",
-            priority=Priority.LOW,
-            qualification_score=5,
-            missing_information=["genuine service request"],
-            summary=(
-                "The message body contains text shaped like instructions to an AI "
-                "system rather than a service enquiry. Flagged for human review; "
-                "no automated follow-up sent."
-            ),
-            recommended_action="Review manually before any outbound contact.",
-            provider="deterministic",
-        )
+    if looks_like_injection(lead):
+        return injection_verdict()
 
     if _SPAM.search(text):
         return Qualification(

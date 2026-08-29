@@ -137,6 +137,32 @@ async def qualify(
     started = time.perf_counter()
     notes: list[str] = []
 
+    # Input-side check, before any provider is asked and regardless of which one
+    # is configured. A lead whose body is shaped like instructions to a model is
+    # not scored by a model at all - there is nothing to gain from asking, and a
+    # compliant model is exactly the case this has to survive.
+    #
+    # This used to sit inside rules.classify(), which meant it only ever ran on
+    # the offline path. On the live-model path an injected lead could come back
+    # as emergency_repair / high / 100 and route straight to sales with a
+    # five-minute SLA. See docs/ai-qualification.md#what-is-actually-guaranteed.
+    if rules.looks_like_injection(lead):
+        return QualifyOutcome(
+            qualification=_finalise(
+                rules.injection_verdict(),
+                table=table,
+                provider="deterministic",
+                model="injection-guard",
+                degraded=True,
+                reason="lead body contains instruction-like text; model not consulted",
+                notes=notes,
+            ),
+            attempts=0,
+            duration_ms=(time.perf_counter() - started) * 1000,
+            provider_used="injection-guard",
+            notes=notes,
+        )
+
     if provider.name == "deterministic":
         result = rules.classify(lead)
         return QualifyOutcome(

@@ -42,6 +42,7 @@ from leadops.normalize.adapters import SOURCE_ADAPTERS
 from leadops.pipeline import new_correlation_id, process_lead
 from leadops.routing.rules import RoutingTable
 from leadops.storage import create_all, init_engine, repo, session_scope
+from leadops.storage.schema import utcnow
 
 log = get_logger(__name__)
 
@@ -351,12 +352,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             open_dead_letters = len(
                 await repo.list_dead_letters(session, unresolved_only=True, limit=200)
             )
+            # Events whose worker took a lease and never came back. Nothing
+            # sweeps these today - `claim_event` only reclaims one if a
+            # redelivery happens to arrive - so counting them is the difference
+            # between a lead that vanished and a lead you can see has vanished.
+            # docs/limitations.md lists the sweeper as a go-live item.
+            now = utcnow()
+            stale_processing = sum(
+                1
+                for e in events
+                if e.status == EventStatus.PROCESSING.value
+                and e.lease_expires_at is not None
+                and e.lease_expires_at <= now
+            )
             return {
                 "sampled_events": len(events),
                 "by_status": by_status,
                 "weak_idempotency_keys": weak_keys,
                 "unverified_signatures": unverified,
                 "open_dead_letters": open_dead_letters,
+                "stale_processing": stale_processing,
             }
 
     return app
