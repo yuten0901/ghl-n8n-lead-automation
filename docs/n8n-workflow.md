@@ -13,6 +13,31 @@ Both ship **inactive** and with no credential values. Importing a portfolio work
 
 ## Import
 
+Either the UI or the CLI works:
+
+```bash
+# imports both files; safe to repeat - the ids are fixed, so this updates
+# rather than duplicating
+n8n import:workflow --separate --input=n8n/workflows
+```
+
+Verified on **n8n 2.36.8** (2026-08-30): both workflows import into a clean
+instance, and a second run leaves two workflows rather than four.
+
+> ⚠️ Two things this exposed, worth knowing if you build your own export.
+> `n8n import:workflow` writes straight into `workflow_entity`, whose `id` is
+> `NOT NULL` and is **not** generated for you — a workflow JSON without a
+> top-level `id` cannot be imported by the CLI at all. And tags need explicit
+> ids, not just names: `tag_entity.name` is `UNIQUE`, so importing a directory
+> of workflows that share a tag name fails partway through, leaving some
+> imported and some not. Both files here carry fixed ids for that reason.
+>
+> If the target instance already has a tag named `gohighlevel` or
+> `lead-automation` with a *different* id, the CLI import will still collide.
+> That case was not reproduced here; the UI import path is unaffected.
+
+Or through the UI:
+
 1. n8n → **Workflows** → **Import from File** → `01-lead-intake.json`, then `02-error-handler.json`.
 2. Set two environment variables on the n8n instance:
    ```

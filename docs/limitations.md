@@ -10,12 +10,28 @@ What this does not do. Written so a client does not have to discover any of it a
 |---|---|
 | GoHighLevel API | Implemented against the documented v2 API, exercised against a local mock. **Never called a paid sub-account.** [Eight things to verify on first contact.](ghl-integration.md#first-contact-with-a-real-account) |
 | Anthropic / OpenAI | Clients implemented and configuration-selected. Request construction and response handling are tested through a stubbed transport; **no live call was made.** |
-| n8n runtime | Workflows are importable and structurally validated in CI. **CI does not execute them** — that needs a running n8n. |
+| n8n runtime | Both workflows were **imported into a real n8n 2.36.8 instance** on 2026-08-30, and a repeat import updates rather than duplicating. **They were not executed there** — that needs credentials this repository deliberately does not carry. CI validates structure only. |
 | Docker Compose | Written but **not executed**; no Docker daemon in the build environment. YAML validity is checked. The non-Docker paths in [`demo.md`](demo.md) are the verified ones. |
 
 **Verified from a clean checkout.** Before publishing, the repository was cloned to an empty directory with no development environment, a fresh virtualenv was created, and every command the README gives was run from there. The suite passes on SQLite (218) and on PostgreSQL 18 (217 + 1 skipped). That step is the reason three failures were found and fixed rather than shipped - see the note below.
 
 > **What the clean-checkout run caught.** The PostgreSQL CI job had been written but never executed, and it failed. Two test fixtures called `create_all()` without dropping first, so isolation worked only because SQLite gives each test its own file; on a shared PostgreSQL database, rows from the previous test survived. The third failure was a negative-control test that is inherently SQLite-specific. None of this was visible from the development machine, which is exactly the point of running it somewhere else.
+
+> **What running n8n for real caught.** Until 2026-08-30 neither workflow could be
+> imported by `n8n import:workflow` **at all**. The importer writes straight into
+> `workflow_entity`, whose `id` column is `NOT NULL` and is not generated for you,
+> and neither file had a top-level `id`. A second defect sat behind it: both files
+> carried the same tag *names* with no ids, and `tag_entity.name` is `UNIQUE`, so a
+> directory import failed partway through with some workflows written and some not.
+>
+> ⚠️ The lesson is about the shape of the checking, not the bug. Twenty-two tests
+> validated this file — node fields, connection integrity, orphan detection, secret
+> patterns, generator drift — and every one of them examined the workflow's
+> *internal consistency*. Not one asked the only question that decides whether a
+> client can use it: does the program that consumes this file accept it? The file
+> was coherent and unusable at the same time, and no amount of more careful
+> internal validation would have found that. Running the real consumer did, in one
+> command. `tests/unit/test_n8n_workflow.py` now checks both requirements.
 
 None of these are hidden behind a green badge. The tests that pass are the ones that test something.
 

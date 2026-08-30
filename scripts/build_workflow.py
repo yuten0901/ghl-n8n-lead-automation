@@ -670,6 +670,13 @@ def build() -> dict:
     }
 
     return {
+        # ⚠️ n8n's `import:workflow` CLI inserts straight into workflow_entity,
+        # whose `id` column is NOT NULL - it does not generate one. Without this
+        # key every CLI import fails with a constraint error, which is how this
+        # was found: the JSON validated structurally for weeks while being
+        # unimportable. A fixed id also keeps re-imports idempotent instead of
+        # accumulating copies. 16 chars, matching n8n's own nanoid format.
+        "id": "LeadOpsIntake001",
         "name": "Lead Ops - GHL intake, AI qualification, routing",
         "nodes": nodes,
         "connections": connections,
@@ -682,7 +689,16 @@ def build() -> dict:
             "errorWorkflow": "REPLACE_WITH_ERROR_WORKFLOW_ID",
             "timezone": "America/Chicago",
         },
-        "tags": [{"name": "gohighlevel"}, {"name": "lead-automation"}],
+        # ⚠️ Tags need explicit ids, not just names. n8n's importer creates a
+        # tag row per workflow, and tag_entity.name is UNIQUE - so importing a
+        # directory of workflows that share a tag name fails partway through
+        # with a constraint error, leaving some imported and some not. With ids
+        # the importer reuses the row. This is also the shape n8n's own
+        # `export:workflow` emits. Verified on n8n 2.36.8, 2026-08-30.
+        "tags": [
+            {"id": "LeadOpsTagGhl01", "name": "gohighlevel"},
+            {"id": "LeadOpsTagAuto01", "name": "lead-automation"},
+        ],
         "pinData": {},
         "meta": {"instanceId": "portfolio-demo", "templateCredsSetupCompleted": False},
     }

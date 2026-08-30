@@ -46,6 +46,29 @@ class TestEveryWorkflowIsWellFormed:
         for key in ("name", "nodes", "connections", "settings"):
             assert key in workflow, f"missing top-level key: {key}"
 
+    def test_every_workflow_carries_an_id(self, workflow: dict) -> None:
+        # ⚠️ This is the check that was missing. `n8n import:workflow` writes
+        # straight into workflow_entity, whose `id` column is NOT NULL and is
+        # not generated for you, so a file without an id cannot be imported by
+        # the CLI at all - it fails with
+        #   SQLITE_CONSTRAINT: NOT NULL constraint failed: workflow_entity.id
+        # Verified against a real n8n 2.36.8 instance on 2026-08-30: both files
+        # failed to import before this, and both imported after.
+        #
+        # Everything else in this class checks the workflow's internal shape,
+        # which is why the gap survived: the graph was consistent, the nodes
+        # were valid, and the file was still unimportable.
+        wf_id = workflow.get("id")
+        assert wf_id, "workflow has no top-level id; n8n import:workflow will reject it"
+        assert isinstance(wf_id, str)
+        assert wf_id.isalnum(), f"id should be alphanumeric like n8n's nanoid, got {wf_id!r}"
+
+    def test_workflow_ids_are_unique_across_files(self) -> None:
+        # A shared id makes the second import overwrite the first rather than
+        # fail, which is the quieter and worse outcome.
+        ids = [load(p).get("id") for p in WORKFLOWS]
+        assert len(ids) == len(set(ids)), f"duplicate workflow ids: {ids}"
+
     def test_node_names_are_unique(self, workflow: dict) -> None:
         # n8n keys connections by node *name*, so a duplicate name silently
         # redirects edges to the wrong node.

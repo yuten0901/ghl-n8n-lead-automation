@@ -1,4 +1,5 @@
 {
+  "id": "LeadOpsIntake001",
   "name": "Lead Ops - GHL intake, AI qualification, routing",
   "nodes": [
     {
@@ -707,9 +708,11 @@
   },
   "tags": [
     {
+      "id": "LeadOpsTagGhl01",
       "name": "gohighlevel"
     },
     {
+      "id": "LeadOpsTagAuto01",
       "name": "lead-automation"
     }
   ],

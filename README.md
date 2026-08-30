@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/yuten0901/ghl-n8n-lead-automation/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)
-![Tests](https://img.shields.io/badge/tests-218-brightgreen)
+![Tests](https://img.shields.io/badge/tests-221-brightgreen)
 ![n8n nodes](https://img.shields.io/badge/n8n-20%20nodes-ff6d5a)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -99,7 +99,7 @@ flowchart TB
 
 **The one design decision worth explaining.** n8n orchestrates and makes the flow visible; the correctness-critical logic — idempotency, normalization, LLM output validation, GHL write semantics — lives in a versioned, unit-tested service that n8n calls over HTTP.
 
-Pure-n8n is faster to build and is the right answer for a simple flow. It is the wrong answer here, because the parts that must be *right* are the parts that are hardest to test and review inside a workflow UI: a race between two simultaneous deliveries, a retry that must resume rather than restart, a model that returns prose instead of JSON. Those are 218 automated tests in this repository. [`docs/architecture.md`](docs/architecture.md#why-not-pure-n8n) sets out the trade-off, including when I would *not* choose this split.
+Pure-n8n is faster to build and is the right answer for a simple flow. It is the wrong answer here, because the parts that must be *right* are the parts that are hardest to test and review inside a workflow UI: a race between two simultaneous deliveries, a retry that must resume rather than restart, a model that returns prose instead of JSON. Those are 221 automated tests in this repository. [`docs/architecture.md`](docs/architecture.md#why-not-pure-n8n) sets out the trade-off, including when I would *not* choose this split.
 
 ---
 
@@ -113,7 +113,7 @@ Stated up front, because it is the first thing a technical client should want to
 | AI qualification with structured output, schema repair, deterministic fallback | **Real.** Runs offline by default; Anthropic and OpenAI clients are implemented and configuration-selected. |
 | GoHighLevel API v2 client — contacts, opportunities, tags, custom fields, notes, conversations, appointments | **Implemented integration interface**, written against the documented v2 API and exercised end-to-end against a local mock. |
 | A live connection to a paid GoHighLevel sub-account | **Not demonstrated.** No paid GHL location was available. [`docs/ghl-integration.md`](docs/ghl-integration.md#first-contact-with-a-real-account) lists exactly what to re-verify on first contact with one. |
-| n8n workflow JSON | **Importable and structurally validated in CI** (20 nodes, connection graph, no embedded credentials). **Not yet run inside n8n** - neither by CI nor by hand. The logic the nodes coordinate lives in the service and is tested there. |
+| n8n workflow JSON | **Imported into a real n8n instance** (2.36.8, 2026-08-30): both files import, and re-importing is idempotent rather than creating copies. Also structurally validated in CI - 20 nodes, connection graph, no embedded credentials. **The workflow has not been *executed* end to end inside n8n**, which needs credentials this repository deliberately does not carry. The logic the nodes coordinate lives in the service and is tested there. |
 | Live Anthropic / OpenAI calls | **Not executed.** Request construction and response handling are tested through a stubbed transport. |
 
 No screenshots of a GoHighLevel account appear in this repository, because I do not have one to screenshot. The exact request and response bodies are in [`docs/ghl-integration.md`](docs/ghl-integration.md) instead.
@@ -248,7 +248,7 @@ Details in [`docs/security.md`](docs/security.md).
 ## Testing
 
 ```bash
-pytest -q          # 218 tests, ~11 seconds, no network
+pytest -q          # 221 tests, ~11 seconds, no network
 ruff check . && ruff format --check .
 python scripts/scan_secrets.py
 ```
