@@ -114,6 +114,36 @@ D150（独立性は「別モデル・別セッション」だけでは成立し�
 
 ---
 
+## クリーン環境検証（CLAUDE.md の必須工程・2026-08-30 実施）
+
+「顧客と同じ形の配布物を、開発環境の恩恵がゼロの別ディレクトリでドキュメントどおり動かす」を実施した。
+`git clone` した空ディレクトリに新規 venv を作り、README のコマンドをそのまま実行:
+
+| 項目 | 結果 |
+|---|---|
+| `pip install -e ".[dev]"` | OK |
+| `python scripts/demo.py` | OK |
+| `pytest -q`（SQLite） | 218 passed |
+| `pytest -q`（**PostgreSQL 18**） | 217 passed / 1 skipped |
+| ruff check / format --check | OK |
+| `scan_secrets.py` | 0件 |
+| workflow 再生成の差分検査 | 差分なし |
+| `.venv` / `local.sqlite3` 等の混入 | なし |
+
+⚠️ **この工程で3件の失敗が見つかった。開発機では一度も見えていなかった。**
+
+1. **CI の postgres ジョブは書いたまま一度も走らせていなかった**。最初の push で
+   flagship の README バッジが赤になっていた。
+2. **テスト分離が SQLite の副作用に偶然依存していた** — `test_api.py` の
+   client/signed_client が `create_all` だけで drop していない。SQLite は
+   テストごとに別ファイルなので分離されて見えていたが、DB を共有する PostgreSQL
+   では前のテストの行が残る。⚠️ 分離は設計されたものではなかった。
+3. 負の対照テストが SQLite 固有（BEGIN IMMEDIATE 由来）だった。skipif で明示除外。
+
+⚠️ docker compose は依然として未実行（Docker デーモンが無い）。
+
+---
+
 ## 残作業（本人作業）
 
 1. GitHub リポジトリ `yuten0901/ghl-n8n-lead-automation` を作成し push

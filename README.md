@@ -266,6 +266,8 @@ Integration tests run the real pipeline against the real mock GoHighLevel server
 
 CI runs the suite on Python 3.11/3.12/3.13, **again on PostgreSQL**, runs `scripts/demo.py` end to end (so the README's instructions cannot silently rot), and regenerates the n8n workflow to check it has not drifted.
 
+Before publishing, all of it was also run from a **clean clone in an empty directory** with a fresh virtualenv - 218 passing on SQLite, 217 + 1 skipped on PostgreSQL 18. That run is what caught three failures that the development machine could not show, including a CI job that had been written but never executed. [Details.](docs/limitations.md#not-verified-against-live-third-party-services)
+
 ---
 
 ## Repository layout
