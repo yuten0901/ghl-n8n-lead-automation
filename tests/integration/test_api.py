@@ -17,7 +17,7 @@ from mock.ghl_mock import server as mock_server
 from leadops.api.main import create_app
 from leadops.api.security import sign
 from leadops.storage import create_all, init_engine
-from leadops.storage.db import reset_for_tests
+from leadops.storage.db import drop_all, reset_for_tests
 from tests.conftest import load_fixture
 
 SECRET = "whsec_test_value_not_a_real_secret"
@@ -32,6 +32,13 @@ async def client(settings, mock_ghl, monkeypatch):
     """
     await reset_for_tests()
     init_engine(settings.database_url)
+    # drop before create: on SQLite each test gets its own tmp_path file, so
+    # isolation was accidental rather than designed. PostgreSQL shares one
+    # database across the suite, and without this the rows from the previous
+    # test are still there - which showed up as "2 dead letters, expected 1",
+    # the second one produced when claim_event legitimately reclaimed the
+    # dead-lettered event left behind by an earlier test.
+    await drop_all()
     await create_all()
 
     import leadops.pipeline as pipeline_module
@@ -157,6 +164,7 @@ class TestSignatures:
         settings.require_signature = True
         await reset_for_tests()
         init_engine(settings.database_url)
+        await drop_all()
         await create_all()
         app = create_app(settings)
         transport = httpx.ASGITransport(app=app)

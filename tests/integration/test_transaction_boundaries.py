@@ -20,6 +20,7 @@ passes either way would not have caught this and will not catch the next one.
 from __future__ import annotations
 
 import asyncio
+import os
 import time
 
 import pytest
@@ -71,6 +72,15 @@ async def test_a_step_lookup_does_not_hold_the_write_lock_across_the_call() -> N
     )
 
 
+@pytest.mark.skipif(
+    bool(os.environ.get("LEADOPS_TEST_DATABASE_URL", "").strip())
+    and not os.environ.get("LEADOPS_TEST_DATABASE_URL", "").startswith("sqlite"),
+    reason=(
+        "SQLite-specific. The defect this guards against comes from BEGIN IMMEDIATE, "
+        "which makes a read take the write lock; PostgreSQL readers never block "
+        "writers, so there is no lock to detect and the control cannot fire."
+    ),
+)
 async def test_the_probe_itself_detects_a_held_lock() -> None:
     """Negative control.
 
