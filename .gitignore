@@ -30,3 +30,9 @@ n8n-data/
 Thumbs.db
 .idea/
 .vscode/
+
+# Internal project-management notes, not part of the deliverable
+STATUS.md
+
+# Local scratch
+tmp/
