@@ -162,6 +162,18 @@ class TestHonesty:
         ]:
             assert disclosure in readme, f"README lost the '{disclosure}' disclosure"
 
+    def test_n8n_runtime_evidence_preserves_results_and_boundary(self) -> None:
+        evidence = read(REPO_ROOT / "docs" / "n8n-runtime-verification.md")
+        for claim in [
+            "n8n 2.36.8",
+            '"outcome":"succeeded"',
+            '"outcome":"duplicate"',
+            "GHL calls added by duplicate delivery | **0**",
+            "paid GoHighLevel",
+            "does **not** claim",
+        ]:
+            assert claim in evidence, f"n8n runtime evidence lost '{claim}'"
+
     def test_no_claim_of_client_or_production_deployment(self) -> None:
         """This is a portfolio project. It must never say otherwise."""
         forbidden = [

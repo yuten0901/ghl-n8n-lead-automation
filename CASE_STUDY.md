@@ -75,10 +75,10 @@ The service layer is appropriate when a lead is valuable, more than one source i
 The distinction matters:
 
 - the ingestion, normalization, idempotency, routing, retry, dead-letter, replay, and local CRM interactions are implemented and tested;
-- the n8n workflow files were imported into n8n 2.36.8 and are structurally checked in CI;
+- the main n8n workflow was imported and executed end to end in n8n 2.36.8 against the real service and bundled GHL mock; a duplicate delivery added no CRM calls ([runtime evidence](docs/n8n-runtime-verification.md));
 - the GHL client is implemented against the documented API v2 surface and exercised against the bundled fault-injecting mock;
 - **a paid GoHighLevel sub-account connection is not demonstrated**;
-- **the workflow has not been executed end to end inside n8n with real credentials**;
+- **the workflow has not been connected to a paid GoHighLevel account or executed with live vendor credentials**;
 - **live Anthropic and OpenAI calls are not claimed**; provider request and response handling use stubbed transports in tests.
 
 Those live-account checks belong in the first controlled stage of a client engagement, using the checklist in [`docs/ghl-integration.md`](docs/ghl-integration.md#first-contact-with-a-real-account).

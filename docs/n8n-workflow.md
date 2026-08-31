@@ -21,8 +21,10 @@ Either the UI or the CLI works:
 n8n import:workflow --separate --input=n8n/workflows
 ```
 
-Verified on **n8n 2.36.8** (2026-08-30): both workflows import into a clean
-instance, and a second run leaves two workflows rather than four.
+Verified on **n8n 2.36.8** (2026-08-31): both workflows import into a clean
+instance, and a second run leaves two workflows rather than four. The main
+workflow was also executed through its production webhook; see the
+[runtime acceptance record](n8n-runtime-verification.md).
 
 > ⚠️ Two things this exposed, worth knowing if you build your own export.
 > `n8n import:workflow` writes straight into `workflow_entity`, whose `id` is
@@ -157,4 +159,9 @@ Both notification nodes are Code nodes on purpose, so the repository has no hard
 - the workflow ships inactive, with an error workflow configured
 - **the file still matches `scripts/build_workflow.py`** — the workflow is generated, so a hand-edit fails CI and points at the generator
 
-**What this does not prove:** that the workflow *executes* correctly. That needs a running n8n, which CI does not have. The claim is that it is importable and internally consistent — which is what can be checked honestly — and the runtime behaviour of each node's logic is covered by the service's own tests, because that is where the logic lives.
+**What CI does not prove:** that the workflow *executes* correctly. CI does not
+run n8n. A separate manual acceptance run on n8n 2.36.8 covered the production
+webhook, the service call, the bundled GHL mock, and a duplicate redelivery;
+the [runtime record](n8n-runtime-verification.md) gives the observed counts and
+states its live-service limitations. The service's own tests remain the
+repeatable coverage for the correctness-critical logic.
