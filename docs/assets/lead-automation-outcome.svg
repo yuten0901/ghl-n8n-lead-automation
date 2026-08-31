@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">GoHighLevel and n8n lead automation outcome flow</title>
+  <desc id="desc">Four lead sources pass through normalization, duplicate protection, AI qualification, deterministic routing, GoHighLevel updates, and follow-up. Retryable failures resume safely and permanent failures enter a replayable dead-letter queue.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#111c32"/>
+    </linearGradient>
+    <linearGradient id="primary" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#60a5fa"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#020617" flood-opacity="0.35"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#64748b"/>
+    </marker>
+    <style>
+      .eyebrow { font: 600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: 2px; fill: #67e8f9; }
+      .title { font: 700 38px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #f8fafc; }
+      .subtitle { font: 400 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #a8b4c7; }
+      .node-title { font: 700 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #f8fafc; }
+      .node-copy { font: 400 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #cbd5e1; }
+      .metric { font: 700 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #f8fafc; }
+      .metric-label { font: 400 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #94a3b8; }
+      .failure-title { font: 700 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #fecaca; }
+      .failure-copy { font: 400 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #cbd5e1; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="675" rx="24" fill="url(#background)"/>
+  <circle cx="1080" cy="75" r="170" fill="#0ea5e9" opacity="0.08"/>
+  <circle cx="112" cy="610" r="210" fill="#8b5cf6" opacity="0.06"/>
+
+  <text x="64" y="60" class="eyebrow">PORTFOLIO DEMONSTRATION · VERIFIED LOCALLY AND IN CI</text>
+  <text x="64" y="108" class="title">One lead in. One clean CRM record out.</text>
+  <text x="64" y="140" class="subtitle">The automation keeps duplicates, API outages, and malformed AI output away from the sales pipeline.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="64" y="202" width="190" height="220" rx="18" fill="#17233a" stroke="#334155"/>
+    <rect x="292" y="202" width="190" height="220" rx="18" fill="#17233a" stroke="#334155"/>
+    <rect x="520" y="202" width="190" height="220" rx="18" fill="#17233a" stroke="#334155"/>
+    <rect x="748" y="202" width="190" height="220" rx="18" fill="#17233a" stroke="#334155"/>
+    <rect x="976" y="202" width="160" height="220" rx="18" fill="#17233a" stroke="#334155"/>
+  </g>
+
+  <g stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#arrow)">
+    <path d="M254 312 H282"/>
+    <path d="M482 312 H510"/>
+    <path d="M710 312 H738"/>
+    <path d="M938 312 H966"/>
+  </g>
+
+  <g>
+    <circle cx="102" cy="240" r="18" fill="url(#primary)"/>
+    <text x="102" y="246" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#07111f">1</text>
+    <text x="88" y="284" class="node-title">Capture</text>
+    <text x="88" y="316" class="node-copy">Website form</text>
+    <text x="88" y="340" class="node-copy">Meta Lead Ads</text>
+    <text x="88" y="364" class="node-copy">Google Ads</text>
+    <text x="88" y="388" class="node-copy">Partner CRM</text>
+  </g>
+
+  <g>
+    <circle cx="330" cy="240" r="18" fill="url(#primary)"/>
+    <text x="330" y="246" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#07111f">2</text>
+    <text x="316" y="284" class="node-title">Protect</text>
+    <text x="316" y="316" class="node-copy">Normalize contact data</text>
+    <text x="316" y="340" class="node-copy">Verify the webhook</text>
+    <text x="316" y="364" class="node-copy">Block repeat deliveries</text>
+    <text x="316" y="388" class="node-copy">Resolve lead identity</text>
+  </g>
+
+  <g>
+    <circle cx="558" cy="240" r="18" fill="url(#primary)"/>
+    <text x="558" y="246" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#07111f">3</text>
+    <text x="544" y="284" class="node-title">Qualify</text>
+    <text x="544" y="316" class="node-copy">Structured AI output</text>
+    <text x="544" y="340" class="node-copy">Deterministic fallback</text>
+    <text x="544" y="364" class="node-copy">Config-driven routing</text>
+    <text x="544" y="388" class="node-copy">Injection containment</text>
+  </g>
+
+  <g>
+    <circle cx="786" cy="240" r="18" fill="url(#primary)"/>
+    <text x="786" y="246" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#07111f">4</text>
+    <text x="772" y="284" class="node-title">Update GHL</text>
+    <text x="772" y="316" class="node-copy">Upsert one contact</text>
+    <text x="772" y="340" class="node-copy">Create/update opportunity</text>
+    <text x="772" y="364" class="node-copy">Apply tags and fields</text>
+    <text x="772" y="388" class="node-copy">Persist every step</text>
+  </g>
+
+  <g>
+    <circle cx="1014" cy="240" r="18" fill="url(#primary)"/>
+    <text x="1014" y="246" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#07111f">5</text>
+    <text x="1000" y="284" class="node-title">Act</text>
+    <text x="1000" y="316" class="node-copy">Sales alert</text>
+    <text x="1000" y="340" class="node-copy">Customer follow-up</text>
+    <text x="1000" y="364" class="node-copy">SLA and audit trail</text>
+    <text x="1000" y="388" class="node-copy">Operator visibility</text>
+  </g>
+
+  <g>
+    <rect x="64" y="462" width="722" height="134" rx="18" fill="#171f34" stroke="#4c2942"/>
+    <text x="88" y="495" class="failure-title">WHEN A DEPENDENCY FAILS</text>
+    <text x="88" y="526" class="failure-copy">Retryable outage</text>
+    <path d="M198 521 H255" stroke="#f87171" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="270" y="526" class="failure-copy">jittered backoff</text>
+    <path d="M384 521 H441" stroke="#f87171" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="456" y="526" class="failure-copy">resume after the last saved step</text>
+    <text x="88" y="562" class="failure-copy">Permanent failure</text>
+    <path d="M208 557 H265" stroke="#f87171" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="280" y="562" class="failure-copy">dead letter + original payload</text>
+    <path d="M485 557 H542" stroke="#f87171" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="557" y="562" class="failure-copy">safe operator replay</text>
+  </g>
+
+  <g>
+    <rect x="814" y="462" width="322" height="134" rx="18" fill="#132b34" stroke="#1f5561"/>
+    <text x="842" y="504" class="metric">221</text>
+    <text x="842" y="526" class="metric-label">automated tests</text>
+    <text x="945" y="504" class="metric">5 → 1</text>
+    <text x="945" y="526" class="metric-label">concurrent deliveries → contact</text>
+    <text x="842" y="566" class="metric">0</text>
+    <text x="870" y="566" class="metric-label">paid accounts needed for the demo</text>
+  </g>
+
+  <text x="64" y="638" class="metric-label">Implemented integration interface; the paid GoHighLevel account connection is intentionally listed as not demonstrated.</text>
+</svg>

@@ -10,6 +10,10 @@
 
 A production-style lead-operations system for a home-services business: a website form, Meta Lead Ads, Google Ads Lead Forms and a partner CRM all post to one webhook. Each lead is normalized, deduplicated, qualified by an LLM with a deterministic fallback, then written to GoHighLevel as a contact + opportunity with tags, custom fields and a pipeline stage — and routed to an SMS callback, a nurture sequence, or nowhere at all if it is spam.
 
+**Review it in 60 seconds:** [client-facing case study](CASE_STUDY.md) · [eight-scenario demo](docs/demo.md#1-the-scripted-demo) · [n8n workflow](n8n/workflows/01-lead-intake.json) · [captured API trace](examples/) · [CI evidence](https://github.com/yuten0901/ghl-n8n-lead-automation/actions/workflows/ci.yml)
+
+![Lead automation outcome flow](docs/assets/lead-automation-outcome.svg)
+
 **Run the whole thing in 30 seconds, with no accounts and no credentials:**
 
 ```bash
