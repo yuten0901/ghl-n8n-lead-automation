@@ -58,9 +58,9 @@ class GHLMapping:
         return stage_name in self.pipeline_stages
 
     def custom_field_payload(self, values: dict[str, Any]) -> list[dict[str, Any]]:
-        """Build the `customFields` array GHL v2 expects.
+        """Build the `customFields` array the current GHL contract expects.
 
-        Shape: [{"id": "<fieldId>", "field_value": "<value>"}]. Fields not present
+        Shape: [{"id": "<fieldId>", "fieldValue": "<value>"}]. Fields not present
         in the mapping are skipped silently *by design*: pushing an unknown field
         id is a 422 that fails the whole contact write, and losing one analytics
         field is not worth losing the lead.
@@ -70,7 +70,7 @@ class GHLMapping:
             field_def = self.custom_fields.get(name)
             if not field_def or value in (None, ""):
                 continue
-            entry: dict[str, Any] = {"field_value": _stringify(value)}
+            entry: dict[str, Any] = {"fieldValue": _stringify(value)}
             if field_def.get("id"):
                 entry["id"] = field_def["id"]
             elif field_def.get("key"):

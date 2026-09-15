@@ -274,7 +274,7 @@
           "parameters": [
             {
               "name": "Version",
-              "value": "2021-07-28"
+              "value": "v3"
             },
             {
               "name": "Content-Type",

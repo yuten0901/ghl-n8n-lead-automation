@@ -1,12 +1,11 @@
-"""GoHighLevel (LeadConnector) API v2 client.
+"""GoHighLevel client for the current documented API contract.
 
 Scope of the claim, stated plainly: this is an **implemented integration
-interface** written against the documented v2 API, exercised end-to-end against
-the bundled mock in `mock/`. It has not been run against a paid GHL location,
-because this is a portfolio project and no such location was available. See
-`docs/ghl-integration.md` for the exact request/response shapes and for the
-short list of things that must be re-verified on first contact with a real
-sub-account.
+interface** refreshed against the documented `v3` API, exercised end-to-end against
+the bundled mock in `mock/`, and verified for contact/opportunity behavior in an
+official HighLevel Sandbox. It has not been run against a paid GHL location. See
+`docs/ghl-integration.md` for the exact request/response shapes and for the short
+list of things that must be re-verified on first contact with a real sub-account.
 
 API surface used (base `https://services.leadconnectorhq.com`):
 
@@ -21,7 +20,7 @@ API surface used (base `https://services.leadconnectorhq.com`):
     POST /conversations/messages           SMS / Email follow-up
     POST /calendars/events/appointments    booking
 
-Every request carries `Authorization: Bearer <token>` and `Version: 2021-07-28`.
+Every request carries `Authorization: Bearer <token>` and `Version: v3`.
 The version header is not optional and pinning it is deliberate: GHL ships
 breaking changes behind new version dates.
 """
@@ -64,7 +63,7 @@ class GHLClient:
     base_url: str
     access_token: str
     location_id: str
-    api_version: str = "2021-07-28"
+    api_version: str = "v3"
     timeout_seconds: float = 10.0
     policy: RetryPolicy = field(default_factory=RetryPolicy)
     client: httpx.AsyncClient | None = None
@@ -208,9 +207,9 @@ class GHLClient:
             "GET",
             "/opportunities/search",
             params={
-                "location_id": self.location_id,
-                "contact_id": contact_id,
-                "pipeline_id": pipeline_id,
+                "locationId": self.location_id,
+                "contactId": contact_id,
+                "pipelineId": pipeline_id,
                 "status": status,
             },
         )

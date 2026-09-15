@@ -25,5 +25,5 @@ The bearer token is redacted in `05`. Everything else is verbatim.
 
 **These are calls to the local mock, not to a live GoHighLevel account.** The
 request bodies are exactly what would be sent to `services.leadconnectorhq.com`;
-the responses are the mock's, reproducing the documented v2 shapes. See
+the responses are the mock's, reproducing the current documented `v3` shapes used here. See
 [`../docs/ghl-integration.md`](../docs/ghl-integration.md).

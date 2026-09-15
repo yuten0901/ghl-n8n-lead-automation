@@ -64,7 +64,7 @@ class TestHappyPath:
         assert "emergency" in contact["tags"]
 
         # Custom fields carry the score and the summary onto the record.
-        field_values = {f.get("id"): f["field_value"] for f in contact["customFields"]}
+        field_values = {f.get("id"): f["fieldValue"] for f in contact["customFields"]}
         assert field_values["cf_DEMO_lead_score_000"] == "90"
         assert field_values["cf_DEMO_qual_mode_0000"] == "deterministic"
 

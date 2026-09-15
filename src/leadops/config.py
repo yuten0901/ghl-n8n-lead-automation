@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     # ---- GoHighLevel ------------------------------------------------------
     # Point this at the bundled mock (default) or at services.leadconnectorhq.com.
     ghl_base_url: str = "http://127.0.0.1:8081"
-    ghl_api_version: str = "2021-07-28"
+    ghl_api_version: str = "v3"
     ghl_access_token: str = ""
     ghl_location_id: str = "loc_DEMO0000000000000000"
     ghl_pipeline_id: str = "pipe_DEMO000000000000000"

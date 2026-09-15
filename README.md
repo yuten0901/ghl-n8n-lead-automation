@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/yuten0901/ghl-n8n-lead-automation/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)
-![Tests](https://img.shields.io/badge/tests-222-brightgreen)
+![Tests](https://img.shields.io/badge/tests-228-brightgreen)
 ![n8n nodes](https://img.shields.io/badge/n8n-20%20nodes-ff6d5a)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -67,7 +67,7 @@ flowchart TB
         STORE[("Idempotency ledger<br/>steps · audit · dead letters")]
     end
 
-    subgraph ghl["GoHighLevel — LeadConnector API v2"]
+    subgraph ghl["GoHighLevel — current API v3 contract"]
         CONTACT["Contact upsert<br/>tags · custom fields"]
         NOTE["Summary note"]
         OPP["Opportunity<br/>pipeline stage"]
@@ -103,7 +103,7 @@ flowchart TB
 
 **The one design decision worth explaining.** n8n orchestrates and makes the flow visible; the correctness-critical logic — idempotency, normalization, LLM output validation, GHL write semantics — lives in a versioned, unit-tested service that n8n calls over HTTP.
 
-Pure-n8n is faster to build and is the right answer for a simple flow. It is the wrong answer here, because the parts that must be *right* are the parts that are hardest to test and review inside a workflow UI: a race between two simultaneous deliveries, a retry that must resume rather than restart, a model that returns prose instead of JSON. Those are 222 automated tests in this repository. [`docs/architecture.md`](docs/architecture.md#why-not-pure-n8n) sets out the trade-off, including when I would *not* choose this split.
+Pure-n8n is faster to build and is the right answer for a simple flow. It is the wrong answer here, because the parts that must be *right* are the parts that are hardest to test and review inside a workflow UI: a race between two simultaneous deliveries, a retry that must resume rather than restart, a model that returns prose instead of JSON. Those are 228 automated tests in this repository. [`docs/architecture.md`](docs/architecture.md#why-not-pure-n8n) sets out the trade-off, including when I would *not* choose this split.
 
 ---
 
@@ -115,12 +115,24 @@ Stated up front, because it is the first thing a technical client should want to
 |---|---|
 | Lead ingestion, normalization, idempotency, routing, retries, dead letters, replay | **Real.** Fully implemented and tested. |
 | AI qualification with structured output, schema repair, deterministic fallback | **Real.** Runs offline by default; Anthropic and OpenAI clients are implemented and configuration-selected. |
-| GoHighLevel API v2 client — contacts, opportunities, tags, custom fields, notes, conversations, appointments | **Implemented integration interface**, written against the documented v2 API and exercised end-to-end against a local mock. |
-| A live connection to a paid GoHighLevel sub-account | **Not demonstrated.** No paid GHL location was available. [`docs/ghl-integration.md`](docs/ghl-integration.md#first-contact-with-a-real-account) lists exactly what to re-verify on first contact with one. |
+| GoHighLevel API client — contacts, opportunities, tags, custom fields, notes, conversations, appointments | **Implemented integration interface**, refreshed against the current documented `v3` contract and exercised end-to-end against a strict local mock. |
+| A live connection to an official HighLevel Sandbox | **Verified on 2026-09-16.** Authentication, pipeline/stage ownership, idempotent contact upsert, and reuse of one open opportunity passed against the official API. [Sanitized machine-readable evidence.](docs/evidence/ghl-sandbox-verification.json) |
+| A live connection to a paid GoHighLevel sub-account | **Not demonstrated.** Sandbox evidence will not be described as production experience. |
 | n8n workflow JSON | **Imported and executed end to end in n8n 2.36.8** (2026-08-31) against the real LeadOps service and bundled GHL mock. The first delivery returned `succeeded`; the same idempotency key returned `duplicate` with no additional CRM calls. Both files also import idempotently, and CI validates the 20-node graph with no embedded credentials. [Runtime evidence and boundary.](docs/n8n-runtime-verification.md) |
 | Live Anthropic / OpenAI calls | **Not executed.** Request construction and response handling are tested through a stubbed transport. |
 
-No screenshots of a GoHighLevel account appear in this repository, because I do not have one to screenshot. The exact request and response bodies are in [`docs/ghl-integration.md`](docs/ghl-integration.md) instead.
+The committed evidence contains no token, personal data, raw API body, or reusable account identifier. Genuine Sandbox UI captures and a 90-second captioned video are included below. The exact request and response shapes are documented in [`docs/ghl-integration.md`](docs/ghl-integration.md).
+
+### Official Sandbox proof
+
+![Synthetic contact created by the integration in an official HighLevel Sandbox](docs/assets/ghl-sandbox-contact-detail.png)
+
+The live run shows a contact created by `INTEGRATION`, tagged for the Sandbox
+proof, and linked to a zero-value opportunity in the configured `Hot Lead`
+stage. See the [four-screen evidence walkthrough](docs/sandbox-evidence.md) and
+[90-second captioned video](docs/video/ghl-sandbox-walkthrough.mp4), plus the
+[sanitized JSON result](docs/evidence/ghl-sandbox-verification.json). This is
+Sandbox proof, not a claim of paid-account or production experience.
 
 ---
 
@@ -147,6 +159,28 @@ python scripts/send_lead.py meta-lead-ads.json --times 3     # duplicate deliver
 ### 3. In n8n
 
 Import [`n8n/workflows/01-lead-intake.json`](n8n/workflows/01-lead-intake.json) and [`02-error-handler.json`](n8n/workflows/02-error-handler.json), set `LEADOPS_BASE_URL`, and POST a fixture to the webhook. [`docs/n8n-workflow.md`](docs/n8n-workflow.md) walks through each node.
+
+### 4. Against an official HighLevel Sandbox
+
+The verifier is read-only unless write mode is explicitly enabled. It stores a sanitized result under `tmp/`, which is gitignored.
+
+```powershell
+$env:GHL_ACCESS_TOKEN = "<sandbox-private-integration-token>"
+$env:GHL_LOCATION_ID = "<sandbox-location-id>"
+python scripts/verify_ghl_sandbox.py
+```
+
+The test-data write pass requires three independent signals: `GHL_SANDBOX=true`, `--write-test`, and the exact Location ID repeated on the command line. It creates only a reserved-address contact and one zero-value opportunity; it never calls messaging, appointments, or payments.
+
+```powershell
+$env:GHL_SANDBOX = "true"
+python scripts/verify_ghl_sandbox.py --write-test `
+  --confirm-sandbox-location $env:GHL_LOCATION_ID `
+  --pipeline-id "<sandbox-pipeline-id>" `
+  --stage-id "<sandbox-stage-id>"
+```
+
+See the [completed verification evidence](docs/evidence/ghl-sandbox-verification.json) and [upgrade plan](docs/live-sandbox-upgrade-plan.md).
 
 ---
 
@@ -196,10 +230,10 @@ Import [`n8n/workflows/01-lead-intake.json`](n8n/workflows/01-lead-intake.json) 
   "source": "leadops:website",
   "tags": ["leadops", "source-website", "priority-high", "emergency", "call-now"],
   "customFields": [
-    { "id": "cf_DEMO_lead_score_000", "field_value": "90" },
-    { "id": "cf_DEMO_lead_priority_", "field_value": "high" },
-    { "id": "cf_DEMO_service_cat_00", "field_value": "emergency_repair" },
-    { "id": "cf_DEMO_qual_mode_0000", "field_value": "deterministic" }
+    { "id": "cf_DEMO_lead_score_000", "fieldValue": "90" },
+    { "id": "cf_DEMO_lead_priority_", "fieldValue": "high" },
+    { "id": "cf_DEMO_service_cat_00", "fieldValue": "emergency_repair" },
+    { "id": "cf_DEMO_qual_mode_0000", "fieldValue": "deterministic" }
   ]
 }
 ```
@@ -252,7 +286,7 @@ Details in [`docs/security.md`](docs/security.md).
 ## Testing
 
 ```bash
-pytest -q          # 222 tests, ~11 seconds, no network
+pytest -q          # 228 tests, ~11 seconds, no network
 ruff check . && ruff format --check .
 python scripts/scan_secrets.py
 ```
@@ -286,7 +320,7 @@ src/leadops/
   routing/       deterministic rules engine
   api/           webhook + admin routes, HMAC verification
   pipeline.py    the orchestrator
-mock/ghl_mock/   local GoHighLevel v2 with scripted fault injection
+mock/ghl_mock/   local GoHighLevel v3 with scripted fault injection
 n8n/workflows/   importable workflow JSON (main + error handler)
 n8n/fixtures/    realistic payloads for every source and failure case
 config/          routing.yml, ghl-mapping.json  (business rules as data)
@@ -305,6 +339,8 @@ scripts/         demo, mock server, lead sender, GHL id discovery, secret scan
 | [security.md](docs/security.md) | Secrets, signatures, PII, least privilege |
 | [demo.md](docs/demo.md) | Every runnable command, with expected output |
 | [limitations.md](docs/limitations.md) | What this does not do, and what production would need |
+| [live-sandbox-upgrade-plan.md](docs/live-sandbox-upgrade-plan.md) | Sandbox proof scope, safety constraints, and acceptance criteria |
+| [sandbox-evidence.md](docs/sandbox-evidence.md) | Genuine HighLevel Sandbox UI captures, findings, and claim boundary |
 | [examples/](examples/) | Real captured request/response traces for one lead, end to end |
 | [upwork-usage.md](docs/upwork-usage.md) | How I describe this work in proposals — including what I will not claim |
 
@@ -314,7 +350,7 @@ scripts/         demo, mock server, lead sender, GHL id discovery, secret scan
 
 Short version — the full list is in [`docs/limitations.md`](docs/limitations.md):
 
-- Not connected to a live GoHighLevel account (see the *real vs mocked* table above).
+- The official Sandbox verified the contact/opportunity path; paid-account behavior, messaging, appointments, and payments remain intentionally unclaimed (see the *real vs mocked* table above).
 - Retries are driven by webhook redelivery plus an n8n wait node. A high-volume deployment wants a real queue; the dead-letter table and step memoization are already the hard part of that migration.
 - SQLite is the default for reviewability. Postgres is a URL change and is covered by CI, and is required for more than one worker.
 - Follow-up message copy is illustrative. Real campaign content belongs in GHL workflows, which is where the client's marketer can edit it.

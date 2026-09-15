@@ -132,17 +132,17 @@ curl http://127.0.0.1:8000/admin/stats | jq
 ### Break it on purpose
 
 ```bash
-AUTH='-H "Version: 2021-07-28" -H "Authorization: Bearer demo_token_value"'
+AUTH='-H "Version: v3" -H "Authorization: Bearer demo_token_value"'
 
 # Two 500s, then recovery
 curl -X POST http://127.0.0.1:8081/_mock/faults \
-  -H "Version: 2021-07-28" -H "Authorization: Bearer demo_token_value" \
+  -H "Version: v3" -H "Authorization: Bearer demo_token_value" \
   -d '{"operation":"contacts.upsert","mode":"500","times":2}'
 python scripts/send_lead.py website-lead-standard.json      # still 200
 
 # A permanent 401 -> dead letter
 curl -X POST http://127.0.0.1:8081/_mock/faults \
-  -H "Version: 2021-07-28" -H "Authorization: Bearer demo_token_value" \
+  -H "Version: v3" -H "Authorization: Bearer demo_token_value" \
   -d '{"operation":"contacts.upsert","mode":"401","times":1}'
 python scripts/send_lead.py partner-lead.json               # 422
 
@@ -184,7 +184,7 @@ Without Docker: run the service and the mock as in section 2, install n8n separa
 ## 4. Tests
 
 ```bash
-pytest -q                                    # 221 tests, ~11 seconds, no network
+pytest -q                                    # 228 tests, ~11 seconds, no network
 pytest -q tests/unit                         # pure logic
 pytest -q tests/integration                  # full pipeline against the mock GHL
 pytest -q -k duplicate                       # just the idempotency cases

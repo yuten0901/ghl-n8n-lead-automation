@@ -1,4 +1,4 @@
-"""A local stand-in for the GoHighLevel v2 API.
+"""A local stand-in for the current documented GoHighLevel API contract.
 
 What it is: an in-memory implementation of the endpoints this project calls,
 returning the documented response shapes, plus a fault-injection layer.
@@ -32,7 +32,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-API_VERSION = "2021-07-28"
+API_VERSION = "v3"
 
 
 @dataclass
@@ -125,7 +125,7 @@ async def _apply_fault(operation: str) -> JSONResponse | None:
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="GoHighLevel v2 (mock)", version="1.0.0")
+    app = FastAPI(title="GoHighLevel v3 contract (mock)", version="1.1.0")
 
     @app.middleware("http")
     async def guard(request: Request, call_next):  # noqa: ANN001
@@ -177,6 +177,55 @@ def create_app() -> FastAPI:
 
     # ---- contacts -------------------------------------------------------
 
+    @app.get("/locations/{location_id}/customFields")
+    async def get_custom_fields(location_id: str) -> dict:
+        return {
+            "customFields": [
+                {
+                    "id": "cf_TEST_lead_score_000",
+                    "name": "Lead Score",
+                    "fieldKey": "contact.lead_score",
+                    "locationId": location_id,
+                    "model": "contact",
+                }
+            ]
+        }
+
+    @app.get("/opportunities/pipelines")
+    async def get_pipelines(request: Request) -> dict:
+        return {
+            "pipelines": [
+                {
+                    "id": "pipe_TEST00000000000000",
+                    "name": "LeadOps Sandbox",
+                    "locationId": request.query_params.get("locationId"),
+                    "stages": [{"id": "stage_TEST_new_lead_0000", "name": "New Lead"}],
+                }
+            ]
+        }
+
+    @app.get("/calendars/")
+    async def get_calendars(request: Request) -> dict:
+        return {
+            "calendars": [
+                {
+                    "id": "cal_TEST000000000000000",
+                    "locationId": request.query_params.get("locationId"),
+                }
+            ]
+        }
+
+    @app.get("/users/")
+    async def get_users(request: Request) -> dict:
+        return {
+            "users": [
+                {
+                    "id": "usr_TEST000000000000000",
+                    "locationId": request.query_params.get("locationId"),
+                }
+            ]
+        }
+
     @app.post("/contacts/upsert")
     async def upsert_contact(request: Request) -> JSONResponse:
         fault = await _apply_fault("contacts.upsert")
@@ -203,10 +252,7 @@ def create_app() -> FastAPI:
                 break
 
         if match is not None:
-            existing_tags = set(match.get("tags") or [])
-            existing_tags.update(body.get("tags") or [])
-            match.update({k: v for k, v in body.items() if k != "tags" and v not in (None, "")})
-            match["tags"] = sorted(existing_tags)
+            match.update({k: v for k, v in body.items() if v not in (None, "")})
             return JSONResponse(
                 status_code=200, content={"succeded": True, "new": False, "contact": match}
             )
@@ -292,8 +338,8 @@ def create_app() -> FastAPI:
         found = [
             o
             for o in state.opportunities.values()
-            if o.get("contactId") == params.get("contact_id")
-            and o.get("pipelineId") == params.get("pipeline_id")
+            if o.get("contactId") == params.get("contactId")
+            and o.get("pipelineId") == params.get("pipelineId")
             and o.get("status") == (params.get("status") or "open")
         ]
         return JSONResponse(

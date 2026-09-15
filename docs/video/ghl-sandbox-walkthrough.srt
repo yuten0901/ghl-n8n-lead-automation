@@ -1,0 +1,30 @@
+1
+00:00:00,000 --> 00:00:08,000
+Resilient Lead Intake for GoHighLevel
+Official Sandbox verification — no production data
+
+2
+00:00:08,000 --> 00:00:28,000
+The contact was created through the integration.
+HighLevel shows the proof tag, source, and linked opportunity.
+
+3
+00:00:28,000 --> 00:00:48,000
+Each verifier run sends the same contact twice.
+Both upserts return one stable contact ID and one open opportunity.
+
+4
+00:00:48,000 --> 00:01:03,000
+The verifier confirms the pipeline and stage belong to this Sandbox
+before it allows any write.
+
+5
+00:01:03,000 --> 00:01:18,000
+Only reserved example.com contacts are used.
+No phone number, customer data, message, appointment, or payment is involved.
+
+6
+00:01:18,000 --> 00:01:30,000
+Evidence: authentication, idempotent contact upsert,
+opportunity reuse, 228 tests, and a public sanitized JSON result.
+

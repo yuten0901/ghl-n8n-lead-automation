@@ -45,7 +45,7 @@ services:
         - >-
           python -c "import urllib.request as r;
           req=r.Request('http://127.0.0.1:8081/_mock/state',
-          headers={'Version':'2021-07-28','Authorization':'Bearer healthcheck_token'});
+          headers={'Version':'v3','Authorization':'Bearer healthcheck_token'});
           r.urlopen(req, timeout=3)"
       interval: 10s
       timeout: 5s

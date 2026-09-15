@@ -122,12 +122,13 @@ class TestClaimsMatchReality:
         known = {name.upper() for name in Settings.model_fields}
         # Read by the n8n workflow rather than by this service.
         n8n_owned = {"LEADOPS_BASE_URL", "GHL_CALENDAR_ID"}
+        sandbox_verifier_owned = {"GHL_PIPELINE_STAGE_ID", "GHL_SANDBOX"}
         declared = {
             line.split("=", 1)[0].strip()
             for line in read(REPO_ROOT / ".env.example").splitlines()
             if "=" in line and not line.strip().startswith("#")
         }
-        unknown = declared - known - n8n_owned
+        unknown = declared - known - n8n_owned - sandbox_verifier_owned
         assert not unknown, f".env.example documents settings the code never reads: {unknown}"
 
     def test_the_lead_sources_named_in_the_readme_are_the_ones_implemented(self) -> None:

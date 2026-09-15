@@ -102,7 +102,7 @@ def ghl_client(settings: Settings, mock_ghl) -> GHLClient:
         base_url="http://ghl.mock",
         access_token=settings.ghl_access_token,
         location_id=settings.ghl_location_id,
-        api_version="2021-07-28",
+        api_version="v3",
         client=http,
         policy=RetryPolicy(max_attempts=3, base_seconds=0.0, max_seconds=0.0),
     )
@@ -144,5 +144,5 @@ async def set_fault(operation: str, mode: str, times: int = 1) -> None:
         await client.post(
             "/_mock/faults",
             json={"operation": operation, "mode": mode, "times": times},
-            headers={"Version": "2021-07-28", "Authorization": "Bearer test_token_not_a_real"},
+            headers={"Version": "v3", "Authorization": "Bearer test_token_not_a_real"},
         )

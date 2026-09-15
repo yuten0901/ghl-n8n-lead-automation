@@ -13,7 +13,7 @@ POST n8n production webhook
   -> validate and detect source
   -> call the LeadOps service
   -> normalize, qualify, and route
-  -> write through the GHL v2 client
+  -> write through the GHL API client
   -> return the n8n webhook response
 ```
 

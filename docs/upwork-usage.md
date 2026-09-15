@@ -18,7 +18,7 @@ The second sentence is stronger anyway, because it is followed by a link that pr
 
 Two things to state without being asked, ideally in the same paragraph as the link:
 
-- The GoHighLevel client is written against the documented v2 API and tested against a local mock; it has not been pointed at a paid sub-account.
+- The contact/opportunity path passed against an official HighLevel Sandbox; the project has not been pointed at a paid sub-account.
 - The AI runs offline by default, so anyone can run the demo in 30 seconds with no keys.
 
 Volunteering that reads as confidence. Having it discovered reads as something else.
@@ -37,9 +37,9 @@ The differentiator to name: **the retry branch loops back into the same call wit
 
 ### 2. GoHighLevel automation jobs
 
-> I've implemented the GHL LeadConnector v2 surface for lead ops — contact upsert with duplicate matching, opportunities and pipeline stages, tags, custom fields, notes, conversations and appointments — with the account-specific id mapping externalised so onboarding a new sub-account is a config file: [link].
+> I built and verified the GHL `v3` contact/opportunity path in an official HighLevel Sandbox — idempotent contact upsert, pipeline-stage validation, and reuse of an existing open opportunity. The repository also covers tags, custom fields, notes, conversations, and appointments against a strict local mock, with account-specific IDs externalised for onboarding: [link].
 
-Point at: [`docs/ghl-integration.md`](ghl-integration.md) (every request/response shape), [`src/leadops/ghl/`](../src/leadops/ghl/), [`scripts/discover_ghl_ids.py`](../scripts/discover_ghl_ids.py).
+Point at: [`docs/sandbox-evidence.md`](sandbox-evidence.md) (genuine UI captures and claim boundary), [`docs/ghl-integration.md`](ghl-integration.md) (every request/response shape), [`src/leadops/ghl/`](../src/leadops/ghl/), [`scripts/discover_ghl_ids.py`](../scripts/discover_ghl_ids.py).
 
 The differentiator: **`discover_ghl_ids.py`**. Every GHL location has its own field and stage ids, and that is the usual reason a working automation breaks on the client's account. One read-only command produces their mapping file. It shows you have thought about *their* onboarding, not just your demo.
 
@@ -81,7 +81,7 @@ Second differentiator, for briefs mentioning a messy CRM: **the returning-lead c
 
 **Opening, general:**
 
-> I build lead automation that survives the boring failures — duplicate webhooks, a CRM API that 500s for ninety seconds, an LLM that returns prose instead of JSON. Here's a working example with 221 tests covering exactly those cases: [link]. It runs locally in 30 seconds with no accounts or API keys.
+> I build lead automation that survives the boring failures — duplicate webhooks, a CRM API that 500s for ninety seconds, an LLM that returns prose instead of JSON. Here's a working example with 228 tests covering exactly those cases, plus a verified contact/opportunity run in an official HighLevel Sandbox: [link]. The account-free demo still runs locally in 30 seconds.
 
 **When the brief mentions duplicates or a messy CRM:**
 
@@ -102,12 +102,40 @@ That last one is a differentiator in itself. Most proposals only ever recommend 
 ## What not to claim
 
 - ❌ Built for a client, or deployed in production for anyone.
-- ❌ "Certified" or "expert" in GoHighLevel — the honest framing is that the integration is implemented against the documented API and tested against a mock.
-- ❌ Any live-account screenshot. There are none in the repo for this reason.
+- ❌ "Certified" or production-experienced in GoHighLevel — the honest framing is that the contact/opportunity path is verified in an official Sandbox and the wider surface is tested against a strict mock.
+- ❌ Describe Sandbox screenshots as a paid client account or production deployment.
 - ❌ Load or throughput figures. Nothing here was load tested and [`limitations.md`](limitations.md) says so.
 - ❌ That the n8n workflow is verified at runtime by CI. CI checks that it is importable and internally consistent; that is the honest claim.
 
 If a client asks for something in that list, the answer is what *is* proven, plus the offer to prove the rest on their account in the first hour of the engagement.
+
+---
+
+## Upwork Portfolio item update
+
+**Title**
+
+> Reliable GoHighLevel + n8n Lead Automation — Sandbox Verified
+
+**Short description**
+
+> A production-style lead operations system for n8n and GoHighLevel. It normalizes multi-source webhooks, prevents duplicate contacts under concurrent delivery, qualifies leads with bounded AI fallback, routes them through config-driven rules, and resumes safely after partial CRM failures.
+>
+> The contact/opportunity path was verified against an official HighLevel Sandbox: two identical contact upserts returned one stable contact ID, the configured pipeline and stage were validated before writing, and an existing open opportunity was reused. The repository includes genuine Sandbox UI captures, a 90-second captioned walkthrough, sanitized machine-readable evidence, and 228 automated tests.
+>
+> Honest boundary: this is a self-directed portfolio project and Sandbox proof, not a paid-client production deployment. Messaging, appointments, payments, and paid-account configuration are intentionally not claimed.
+
+**Suggested skills**
+
+`GoHighLevel`, `n8n`, `Python`, `FastAPI`, `API Integration`, `Webhook`,
+`CRM Automation`, `AI Automation`, `PostgreSQL`, `Pytest`
+
+**Recommended media order**
+
+1. `ghl-sandbox-contact-detail.png`
+2. `ghl-sandbox-opportunities.png`
+3. `ghl-sandbox-pipeline.png`
+4. `ghl-sandbox-walkthrough.mp4`
 
 ---
 

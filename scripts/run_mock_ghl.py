@@ -12,11 +12,11 @@ Then point the service at it (this is already the default in `.env.example`):
 Control plane, for demonstrating failure handling by hand:
 
     curl -X POST http://127.0.0.1:8081/_mock/faults \\
-      -H "Version: 2021-07-28" -H "Authorization: Bearer demo_token_value" \\
+      -H "Version: v3" -H "Authorization: Bearer demo_token_value" \\
       -d '{"operation":"contacts.upsert","mode":"500","times":2}'
 
     curl http://127.0.0.1:8081/_mock/state \
-      -H "Version: 2021-07-28" -H "Authorization: Bearer demo_token_value"
+      -H "Version: v3" -H "Authorization: Bearer demo_token_value"
 """
 
 from __future__ import annotations
@@ -31,13 +31,13 @@ import uvicorn  # noqa: E402
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run the mock GoHighLevel v2 API.")
+    parser = argparse.ArgumentParser(description="Run the mock current GoHighLevel API contract.")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8081)
     args = parser.parse_args()
 
-    print(f"Mock GoHighLevel v2 API on http://{args.host}:{args.port}")
-    print("  This is NOT GoHighLevel. It implements the documented v2 request and")
+    print(f"Mock GoHighLevel v3 contract on http://{args.host}:{args.port}")
+    print("  This is NOT GoHighLevel. It implements the documented v3 request and")
     print("  response shapes so the demo runs without a paid account. See")
     print("  docs/ghl-integration.md for what must be re-verified against a real one.")
     uvicorn.run("mock.ghl_mock.server:app", host=args.host, port=args.port, log_level="warning")

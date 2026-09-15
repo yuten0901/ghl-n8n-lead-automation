@@ -23,7 +23,7 @@ This project treats those behaviours as the main requirements, not edge cases.
 |---|---|
 | Two importable n8n workflows | Multi-source webhook intake, visible routing, retries, error handling, and audit output |
 | FastAPI lead-operations service | Normalization, signature verification, idempotency, qualification, routing, and replay APIs |
-| GoHighLevel v2 integration layer | Contacts, opportunities, tags, custom fields, notes, conversations, and appointments |
+| GoHighLevel v3 integration layer | Contacts, opportunities, tags, custom fields, notes, conversations, and appointments |
 | Configuration-first onboarding | Account-specific field, pipeline, stage, routing, and SLA mappings stay outside application code |
 | Fault-injecting GHL mock | Repeatable 429, 5xx, timeout, authentication, validation, and partial-failure scenarios |
 | Handover documentation | Architecture decisions, deployment steps, security boundaries, limitations, and a live-account checklist |
@@ -51,11 +51,14 @@ These are engineering outcomes demonstrated by the repository, not production bu
 | Review the n8n flow node by node | [`docs/n8n-workflow.md`](docs/n8n-workflow.md) |
 | Inspect the generated workflow files | [`n8n/workflows/`](n8n/workflows/) |
 | Review GHL request/response shapes and onboarding checks | [`docs/ghl-integration.md`](docs/ghl-integration.md) |
+| Inspect the official HighLevel Sandbox verification result | [`docs/evidence/ghl-sandbox-verification.json`](docs/evidence/ghl-sandbox-verification.json) |
+| Review genuine Sandbox UI captures and the evidence boundary | [`docs/sandbox-evidence.md`](docs/sandbox-evidence.md) |
+| Watch the official Sandbox proof without audio | [90-second captioned walkthrough](docs/video/ghl-sandbox-walkthrough.mp4) |
 | Review security boundaries and tested attacks | [`docs/security.md`](docs/security.md) |
 | Review known limitations | [`docs/limitations.md`](docs/limitations.md) |
 | Inspect all automated checks | [GitHub Actions](https://github.com/yuten0901/ghl-n8n-lead-automation/actions/workflows/ci.yml) |
 
-The suite contains **221 automated tests**. CI runs it on Python 3.11, 3.12, and 3.13, runs it again on PostgreSQL, executes the complete demo, regenerates and checks the n8n workflow, and verifies that the secret scanner rejects a planted credential.
+The suite contains **228 automated tests**. CI runs it on Python 3.11, 3.12, and 3.13, runs it again on PostgreSQL, executes the complete demo, regenerates and checks the n8n workflow, and verifies that the secret scanner rejects a planted credential.
 
 ## What a client handover would include
 
@@ -76,7 +79,7 @@ The distinction matters:
 
 - the ingestion, normalization, idempotency, routing, retry, dead-letter, replay, and local CRM interactions are implemented and tested;
 - the main n8n workflow was imported and executed end to end in n8n 2.36.8 against the real service and bundled GHL mock; a duplicate delivery added no CRM calls ([runtime evidence](docs/n8n-runtime-verification.md));
-- the GHL client is implemented against the documented API v2 surface and exercised against the bundled fault-injecting mock;
+- the GHL client is refreshed against the current documented `v3` contract, exercised against the bundled fault-injecting mock, and its contact/opportunity path passed against an official HighLevel Sandbox on 2026-09-16;
 - **a paid GoHighLevel sub-account connection is not demonstrated**;
 - **the workflow has not been connected to a paid GoHighLevel account or executed with live vendor credentials**;
 - **live Anthropic and OpenAI calls are not claimed**; provider request and response handling use stubbed transports in tests.

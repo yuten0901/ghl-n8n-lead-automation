@@ -8,9 +8,9 @@
         "headers": {
           "accept": "application/json",
           "content-type": "application/json",
-          "version": "2021-07-28",
+          "version": "v3",
           "authorization": "Bearer <redacted>",
-          "x-correlation-id": "cid_c6c6e1d823274055"
+          "x-correlation-id": "cid_3387857587224933"
         },
         "body": {
           "locationId": "loc_DEMO0000000000000000",
@@ -30,35 +30,35 @@
           "city": "Round Rock, TX",
           "customFields": [
             {
-              "field_value": "website",
+              "fieldValue": "website",
               "id": "cf_DEMO_lead_source_00"
             },
             {
-              "field_value": "90",
+              "fieldValue": "90",
               "id": "cf_DEMO_lead_score_000"
             },
             {
-              "field_value": "high",
+              "fieldValue": "high",
               "id": "cf_DEMO_lead_priority_"
             },
             {
-              "field_value": "emergency_repair",
+              "fieldValue": "emergency_repair",
               "id": "cf_DEMO_service_cat_00"
             },
             {
-              "field_value": "Dana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).",
+              "fieldValue": "Dana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).",
               "id": "cf_DEMO_ai_summary_000"
             },
             {
-              "field_value": "",
+              "fieldValue": "",
               "id": "cf_DEMO_missing_info_0"
             },
             {
-              "field_value": "cid_c6c6e1d823274055",
+              "fieldValue": "cid_3387857587224933",
               "id": "cf_DEMO_correlation_id"
             },
             {
-              "field_value": "deterministic",
+              "fieldValue": "deterministic",
               "id": "cf_DEMO_qual_mode_0000"
             }
           ]
@@ -70,7 +70,7 @@
           "succeded": true,
           "new": true,
           "contact": {
-            "id": "ct_17d53ebce22840c293f5",
+            "id": "ct_27470cb0b0144cae9b7e",
             "locationId": "loc_DEMO0000000000000000",
             "dateAdded": "2026-08-29T00:00:00.000Z",
             "firstName": "Dana",
@@ -89,35 +89,35 @@
             "city": "Round Rock, TX",
             "customFields": [
               {
-                "field_value": "website",
+                "fieldValue": "website",
                 "id": "cf_DEMO_lead_source_00"
               },
               {
-                "field_value": "90",
+                "fieldValue": "90",
                 "id": "cf_DEMO_lead_score_000"
               },
               {
-                "field_value": "high",
+                "fieldValue": "high",
                 "id": "cf_DEMO_lead_priority_"
               },
               {
-                "field_value": "emergency_repair",
+                "fieldValue": "emergency_repair",
                 "id": "cf_DEMO_service_cat_00"
               },
               {
-                "field_value": "Dana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).",
+                "fieldValue": "Dana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).",
                 "id": "cf_DEMO_ai_summary_000"
               },
               {
-                "field_value": "",
+                "fieldValue": "",
                 "id": "cf_DEMO_missing_info_0"
               },
               {
-                "field_value": "cid_c6c6e1d823274055",
+                "fieldValue": "cid_3387857587224933",
                 "id": "cf_DEMO_correlation_id"
               },
               {
-                "field_value": "deterministic",
+                "fieldValue": "deterministic",
                 "id": "cf_DEMO_qual_mode_0000"
               }
             ]
@@ -128,13 +128,13 @@
     {
       "request": {
         "method": "POST",
-        "url": "http://ghl.mock/contacts/ct_17d53ebce22840c293f5/notes",
+        "url": "http://ghl.mock/contacts/ct_27470cb0b0144cae9b7e/notes",
         "headers": {
           "accept": "application/json",
           "content-type": "application/json",
-          "version": "2021-07-28",
+          "version": "v3",
           "authorization": "Bearer <redacted>",
-          "x-correlation-id": "cid_c6c6e1d823274055"
+          "x-correlation-id": "cid_3387857587224933"
         },
         "body": {
           "body": "Lead summary (deterministic)\n\nIntent: Urgent repair needed\nCategory: emergency_repair\nPriority: high  |  Score: 90/100\n\nDana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).\n\nRecommended next step: Call within the SLA window.\n\n--- original message ---\nOur furnace stopped working overnight and there is no heat in the house. We have a baby at home so this is urgent - can someone come out today?"
@@ -144,8 +144,8 @@
         "status": 201,
         "body": {
           "note": {
-            "id": "note_014d9e0ea8b048ecb0b1",
-            "contactId": "ct_17d53ebce22840c293f5",
+            "id": "note_27fb4be453db4c82be91",
+            "contactId": "ct_27470cb0b0144cae9b7e",
             "body": "Lead summary (deterministic)\n\nIntent: Urgent repair needed\nCategory: emergency_repair\nPriority: high  |  Score: 90/100\n\nDana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).\n\nRecommended next step: Call within the SLA window.\n\n--- original message ---\nOur furnace stopped working overnight and there is no heat in the house. We have a baby at home so this is urgent - can someone come out today?"
           }
         }
@@ -154,13 +154,13 @@
     {
       "request": {
         "method": "GET",
-        "url": "http://ghl.mock/opportunities/search?location_id=loc_DEMO0000000000000000&contact_id=ct_17d53ebce22840c293f5&pipeline_id=pipe_DEMO000000000000000&status=open",
+        "url": "http://ghl.mock/opportunities/search?locationId=loc_DEMO0000000000000000&contactId=ct_27470cb0b0144cae9b7e&pipelineId=pipe_DEMO000000000000000&status=open",
         "headers": {
           "accept": "application/json",
           "content-type": "application/json",
-          "version": "2021-07-28",
+          "version": "v3",
           "authorization": "Bearer <redacted>",
-          "x-correlation-id": "cid_c6c6e1d823274055"
+          "x-correlation-id": "cid_3387857587224933"
         },
         "body": null
       },
@@ -181,15 +181,15 @@
         "headers": {
           "accept": "application/json",
           "content-type": "application/json",
-          "version": "2021-07-28",
+          "version": "v3",
           "authorization": "Bearer <redacted>",
-          "x-correlation-id": "cid_c6c6e1d823274055"
+          "x-correlation-id": "cid_3387857587224933"
         },
         "body": {
           "locationId": "loc_DEMO0000000000000000",
           "pipelineId": "pipe_DEMO000000000000000",
           "pipelineStageId": "stage_DEMO_hot_lead_0000",
-          "contactId": "ct_17d53ebce22840c293f5",
+          "contactId": "ct_27470cb0b0144cae9b7e",
           "name": "Dana Whitfield - emergency repair",
           "status": "open",
           "monetaryValue": 1200.0,
@@ -200,11 +200,11 @@
         "status": 201,
         "body": {
           "opportunity": {
-            "id": "opp_53671de016004428884a",
+            "id": "opp_f3b5fd8023ec4cfca8b8",
             "locationId": "loc_DEMO0000000000000000",
             "pipelineId": "pipe_DEMO000000000000000",
             "pipelineStageId": "stage_DEMO_hot_lead_0000",
-            "contactId": "ct_17d53ebce22840c293f5",
+            "contactId": "ct_27470cb0b0144cae9b7e",
             "name": "Dana Whitfield - emergency repair",
             "status": "open",
             "monetaryValue": 1200.0,
@@ -220,21 +220,21 @@
         "headers": {
           "accept": "application/json",
           "content-type": "application/json",
-          "version": "2021-07-28",
+          "version": "v3",
           "authorization": "Bearer <redacted>",
-          "x-correlation-id": "cid_c6c6e1d823274055"
+          "x-correlation-id": "cid_3387857587224933"
         },
         "body": {
           "type": "SMS",
-          "contactId": "ct_17d53ebce22840c293f5",
+          "contactId": "ct_27470cb0b0144cae9b7e",
           "message": "Hi Dana - thanks for contacting us about emergency repair. We have your request and someone will call you shortly."
         }
       },
       "response": {
         "status": 201,
         "body": {
-          "conversationId": "conv_5c22388f8c8441aaa5da",
-          "messageId": "msg_39a323604bfc4a2da805"
+          "conversationId": "conv_ac17e5e325774d11a54f",
+          "messageId": "msg_cdeee7f86b2a4f7293c3"
         }
       }
     },
@@ -245,13 +245,13 @@
         "headers": {
           "accept": "application/json",
           "content-type": "application/json",
-          "version": "2021-07-28",
+          "version": "v3",
           "authorization": "Bearer <redacted>",
-          "x-correlation-id": "cid_c6c6e1d823274055"
+          "x-correlation-id": "cid_3387857587224933"
         },
         "body": {
           "type": "Email",
-          "contactId": "ct_17d53ebce22840c293f5",
+          "contactId": "ct_27470cb0b0144cae9b7e",
           "subject": "[HIGH] Dana Whitfield - emergency_repair",
           "message": "New high-priority lead: Dana Whitfield\nCategory: emergency_repair (score 90/100)\nContact: +15125550147 / dana.whitfield@example.com\nArea: Round Rock, TX\nRespond within: 5 minutes\nRouted by rule: emergency_high_priority - Emergency work is time-priced; a five-minute callback wins the job.\n\nDana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).\n\nOriginal message: Our furnace stopped working overnight and there is no heat in the house. We have a baby at home so this is urgent - can someone come out today?",
           "html": "New high-priority lead: Dana Whitfield<br>Category: emergency_repair (score 90/100)<br>Contact: +15125550147 / dana.whitfield@example.com<br>Area: Round Rock, TX<br>Respond within: 5 minutes<br>Routed by rule: emergency_high_priority - Emergency work is time-priced; a five-minute callback wins the job.<br><br>Dana Whitfield enquired about emergency repair in Round Rock, TX (service field: Heating repair).<br><br>Original message: Our furnace stopped working overnight and there is no heat in the house. We have a baby at home so this is urgent - can someone come out today?",
@@ -262,8 +262,8 @@
       "response": {
         "status": 201,
         "body": {
-          "conversationId": "conv_97b7f61e31014751b698",
-          "messageId": "msg_c998f48dc64047f689c7"
+          "conversationId": "conv_cc0354e862fe4c42896b",
+          "messageId": "msg_59860b8e2c1c4c83979d"
         }
       }
     }

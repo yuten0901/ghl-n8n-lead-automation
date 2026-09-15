@@ -8,8 +8,8 @@ turns the manual hunt through the GHL UI into one command.
     GHL_ACCESS_TOKEN=... GHL_LOCATION_ID=... python scripts/discover_ghl_ids.py \\
         > config/ghl-mapping.json
 
-Requires a real, paid GoHighLevel location. It was written against the documented
-v2 endpoints and has NOT been run against a live account in building this
+Requires a real GoHighLevel location or official Sandbox. It was written against
+the documented v3 endpoints and has NOT yet been run against a live account in building this
 repository - see docs/ghl-integration.md, which lists exactly what to check on
 first contact. It is read-only: it issues GET requests and writes nothing.
 """
@@ -27,7 +27,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 import httpx  # noqa: E402
 
 BASE = os.environ.get("GHL_BASE_URL", "https://services.leadconnectorhq.com")
-VERSION = os.environ.get("GHL_API_VERSION", "2021-07-28")
+VERSION = os.environ.get("GHL_API_VERSION", "v3")
 
 # Custom fields this system writes. Matched case-insensitively against the
 # location's field names, so a client who called it "Lead Score" still matches.

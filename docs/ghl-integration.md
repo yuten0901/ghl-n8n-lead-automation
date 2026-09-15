@@ -2,11 +2,11 @@
 
 ## What is being claimed
 
-This is an **implemented integration interface** against the documented LeadConnector API v2, exercised end to end against a local mock that reproduces the documented request and response shapes.
+This is an **implemented integration interface** against the current documented HighLevel `v3` contract, exercised end to end against a local mock that reproduces the request and response shapes used here.
 
-It has **not** been run against a paid GoHighLevel sub-account, because no such account was available while building this portfolio project. Everything on this page is written from the published v2 API surface. [First contact with a real account](#first-contact-with-a-real-account) lists exactly what to re-verify, and it is a short list because the mock encodes the contract rather than a guess at it.
+On 2026-09-16, the contact/opportunity path also passed a credentialed run against an official HighLevel Sandbox: two identical contact upserts returned one stable contact ID, and the open opportunity was reused rather than duplicated. [Sanitized evidence](evidence/ghl-sandbox-verification.json). It has **not** been run against a paid GoHighLevel sub-account. [First contact with a real account](#first-contact-with-a-real-account) lists what remains deliberately outside the Sandbox proof.
 
-There are no screenshots of a GoHighLevel UI in this repository. Fabricating them would be worth less than saying this plainly.
+There are no GoHighLevel UI screenshots in the repository yet. Only genuine Sandbox captures will be added; the committed JSON exposes fingerprints and outcomes rather than credentials or raw account data.
 
 ---
 
@@ -16,10 +16,10 @@ There are no screenshots of a GoHighLevel UI in this repository. Fabricating the
 |---|---|
 | Base URL | `https://services.leadconnectorhq.com` |
 | Auth | `Authorization: Bearer <token>` |
-| Version | `Version: 2021-07-28` — **required**, and pinned deliberately |
+| Version | `Version: v3` — **required**, and pinned deliberately |
 | Content | `Accept: application/json`, `Content-Type: application/json` |
 
-The version header is not optional and GoHighLevel ships breaking changes behind new version dates. Pinning it means an upstream change becomes a deliberate upgrade rather than a Tuesday-morning outage. The mock rejects a request without it, so a missing header fails locally instead of on the client's account.
+The version header is not optional. Pinning the current documented contract means an upstream change becomes a deliberate upgrade rather than a silent production change. The mock rejects a missing or stale value, so this class of error fails locally first.
 
 ### Tokens
 
@@ -75,21 +75,19 @@ Least privilege: if a deployment never books appointments, leave the calendar sc
   "source": "leadops:website",
   "tags": ["leadops", "source-website", "priority-high", "emergency"],
   "customFields": [
-    { "id": "cf_...", "field_value": "90" },
-    { "id": "cf_...", "field_value": "emergency_repair" }
+    { "id": "cf_...", "fieldValue": "90" },
+    { "id": "cf_...", "fieldValue": "emergency_repair" }
   ]
 }
 ```
 
 ```json
 {
-  "succeded": true,
   "new": false,
-  "contact": { "id": "ct_...", "locationId": "loc_...", "email": "...", "tags": ["..."] }
+  "contact": { "id": "ct_...", "locationId": "loc_...", "email": "...", "tags": ["..."] },
+  "traceId": "trace_..."
 }
 ```
-
-> The response field really is spelled `succeded`. The client does not depend on it — `new` and the HTTP status are what it reads — but it is reproduced in the mock so nobody "fixes" the spelling and breaks a real integration.
 
 **Why upsert rather than search-then-create.** Search-then-create has a race: two forms submitted seconds apart both find nothing and both create. GoHighLevel already resolves this server-side, matching **email first, then phone, within the location**. Our own `leads` table is the second line of defence, not the first.
 
@@ -103,7 +101,7 @@ The note carries the AI summary in prose. Custom fields are for filtering and au
 
 ### Opportunities
 
-**`GET /opportunities/search?location_id=&contact_id=&pipeline_id=&status=open`**
+**`GET /opportunities/search?locationId=&contactId=&pipelineId=&status=open`**
 
 **`POST /opportunities/`**
 
@@ -124,7 +122,7 @@ The note carries the AI summary in prose. Custom fields are for filtering and au
 
 **The rule that prevents the angriest client message.** A returning lead with an *already open* opportunity gets that opportunity **updated** — moved stage, value refreshed — never a second card on the board. A new opportunity is created only when nothing is open. Search first, then decide.
 
-Note the parameter-style inconsistency: opportunity search uses `location_id` / `contact_id` (snake_case) while contact endpoints use `locationId` (camelCase). That is the real API's inconsistency, reproduced in the mock so it is caught here rather than there.
+Opportunity search now uses the same camelCase ID parameters as the other current endpoints. The strict mock rejects the legacy snake_case shape by returning no match.
 
 ### Conversations and calendar
 
@@ -172,7 +170,7 @@ Text fields on the sub-account:
 
 ## Known behaviours worth stating
 
-**Tags accumulate.** GoHighLevel's upsert unions tags rather than replacing them. A lead that arrives as `priority-medium` and later as `priority-high` ends up carrying both. This is the platform's behaviour, not a bug here, and it is why the **`lead_priority` custom field is authoritative** — it is overwritten on every write. If a client needs mutually exclusive priority tags, the fix is an explicit `DELETE /contacts/{id}/tags` for the opposing tags before the upsert, at the cost of an extra round trip against the rate limit. That trade-off should be the client's call, so it is not made silently here.
+**Upsert tags replace the current tag array.** The current contract documents replacement semantics. This integration therefore sends the complete desired set on each upsert; `lead_priority` remains the authoritative value for reporting. Incremental changes outside this flow should use the dedicated add/remove-tag endpoints so they are not accidentally overwritten.
 
 **Contact id location varies.** Some responses put the object at the top level, some under `contact`. The client handles both — cheaper than being wrong on the client's account.
 
@@ -180,18 +178,17 @@ Text fields on the sub-account:
 
 ## First contact with a real account
 
-The eight things to verify the first time this touches a paid sub-account. None require code changes if they hold.
+The remaining items to verify before this touches a paid sub-account. The official Sandbox command intentionally avoids messaging, appointments, payments, and real customer data.
 
-1. **`Version: 2021-07-28` is still current.** If GoHighLevel has published a newer version date, read its changelog before bumping — the pin exists so this is a decision.
-2. **`POST /contacts/upsert` returns `new` and a contact id in the shape above.** If the id moves, `_extract_contact_id` already handles the two known shapes; add a third if needed.
-3. **Duplicate matching is email-then-phone within the location.** Send the same person twice with a differently formatted phone and confirm one contact.
-4. **`GET /opportunities/search` really uses snake_case parameters.** If it is camelCase on the live API, it is a one-line change in `ghl/client.py`.
-5. **429 carries `Retry-After`.** If it does not, our jittered backoff already covers it; confirm which.
-6. **Custom field writes accept `{"id", "field_value"}`.** Some accounts prefer `{"key", "field_value"}` — the mapping supports both, per field.
-7. **`POST /conversations/messages` requires a conversation to exist first** on some account configurations. If so, the first-touch message needs a conversation create ahead of it — an additive change to `operations.send_follow_up`.
-8. **The internal sales alert actually reaches a salesperson.** `notify_sales` posts to `/conversations/messages` with the *customer's* `contactId` plus `emailTo` and `userId`, expecting GoHighLevel to redirect delivery to the internal address. Those two fields are **not part of the request shape documented above**, and the local mock stores the body without validating it — so this is an assumption this repository has never tested. Check it before the first live lead: the failure mode is a customer receiving an email that begins "New high-priority lead: <their own name>". If it does not redirect, the fix is a separate internal channel (Slack webhook or SMTP) rather than a GoHighLevel conversation.
+1. **Re-check the documented version before deployment.** The contract is pinned to `v3`; a future upgrade remains a deliberate change.
+2. **Confirm the paid location's duplicate-contact settings.** Upsert behavior follows those account-level settings; this integration explicitly sends `createNewIfDuplicateAllowed=false` in the Sandbox proof.
+3. **Confirm custom-field IDs and data types.** The current contact shape is `{"id", "fieldValue"}`; IDs remain location-specific.
+4. **Observe a real 429 response.** The client honors `Retry-After` when supplied and uses jittered backoff otherwise, but the Sandbox proof does not intentionally exhaust its rate limit.
+5. **Verify the conversation and sender configuration before any outbound message.** No Sandbox verification sends SMS or email.
+6. **Verify appointment configuration before enabling booking.** No Sandbox verification creates appointments.
+7. **Replace the internal sales alert if necessary.** `notify_sales` still contains the documented uncertainty around `emailTo` and `userId`; Slack or SMTP is safer until the account-specific behavior is proven.
 
-Run `python scripts/discover_ghl_ids.py` first; it exercises four read-only endpoints and will surface auth or scope problems before any write is attempted.
+Run `python scripts/verify_ghl_sandbox.py` first. It exercises four read-only endpoints and writes only sanitized evidence. The write pass requires `GHL_SANDBOX=true`, `--write-test`, and an exact Location ID confirmation; it never calls messaging, appointment, or payment endpoints.
 
 ---
 
@@ -201,7 +198,7 @@ Run `python scripts/discover_ghl_ids.py` first; it exercises four read-only endp
 
 ```bash
 curl -X POST http://127.0.0.1:8081/_mock/faults \
-  -H "Version: 2021-07-28" -H "Authorization: Bearer demo_token_value" \
+  -H "Version: v3" -H "Authorization: Bearer demo_token_value" \
   -d '{"operation":"contacts.upsert","mode":"500","times":2}'
 ```
 

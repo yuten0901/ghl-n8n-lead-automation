@@ -376,7 +376,7 @@ def build() -> dict:
                 "sendHeaders": True,
                 "headerParameters": {
                     "parameters": [
-                        {"name": "Version", "value": "2021-07-28"},
+                        {"name": "Version", "value": "v3"},
                         {"name": "Content-Type", "value": "application/json"},
                     ]
                 },

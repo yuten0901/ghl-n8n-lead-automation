@@ -273,7 +273,7 @@ async def main() -> int:
     print(f"\n{BOLD}Final CRM state{RESET}")
     for contact in mock.state.contacts.values():
         fields = {
-            f.get("id", f.get("key")): f["field_value"] for f in contact.get("customFields", [])
+            f.get("id", f.get("key")): f["fieldValue"] for f in contact.get("customFields", [])
         }
         print(
             f"  - {contact.get('name', '?'):<24} "
